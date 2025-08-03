@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw Funds | Pocket Investie</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2ecc71;
+            --dark: #2c3e50;
+            --danger: #e74c3c;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .withdraw-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .withdraw-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .withdraw-header h1 {
+            color: var(--dark);
+        }
+        .balance-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        .balance-amount {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .cta-button {
+            display: block;
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .cta-button:hover {
+            background-color: #27ae60;
+        }
+        .loading {
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .error-message {
+            color: var(--danger);
+            margin-top: 1rem;
+            text-align: center;
+            display: none;
+        }
+        .bank-details {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 5px;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="withdraw-container">
+        <div class="withdraw-header">
+            <h1><i class="fas fa-wallet"></i> Withdraw Funds</h1>
+            <p>Request a withdrawal to your bank account</p>
+        </div>
+
+        <div class="balance-info">
+            Available Balance: <span class="balance-amount" id="userBalance">₦0.00</span>
+        </div>
+
+        <div class="bank-details">
+            <h3><i class="fas fa-university"></i> Bank Details</h3>
+            <form id="withdrawForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required readonly>
+                </div>
+                <div class="form-group">
+                    <label for="accountNumber">Account Number</label>
+                    <input type="text" id="accountNumber" pattern="[0-9]{10}" required>
+                </div>
+                <div class="form-group">
+                    <label for="accountName">Account Name</label>
+                    <input type="text" id="accountName" required>
+                </div>
+                <div class="form-group">
+                    <label for="bankName">Bank Name</label>
+                    <select id="bankName" required>
+                        <option value="">Select Bank</option>
+                        <option value="Access Bank">Access Bank</option>
+                        <option value="Zenith Bank">Zenith Bank</option>
+                        <option value="GTBank">GTBank</option>
+                        <option value="First Bank">First Bank</option>
+                        <option value="UBA">United Bank for Africa (UBA)</option>
+                        <option value="Other">Other Bank</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Amount (₦)</label>
+                    <input type="number" id="amount" min="2000" required>
+                    <p style="font-size: 0.9rem; color: #777;">Minimum withdrawal: ₦2,000</p>
+                </div>
+                <button type="submit" class="cta-button" id="submitBtn">
+                    Request Withdrawal
+                    <i class="fas fa-spinner fa-spin loading" id="spinner" style="display: none;"></i>
+                </button>
+                <div id="errorMessage" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="firebase.js"></script>
+
+    <script>
+        // Initialize Firebase
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const userBalanceEl = document.getElementById('userBalance');
+        const emailInput = document.getElementById('email');
+        const withdrawForm = document.getElementById('withdrawForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const spinner = document.getElementById('spinner');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Check auth state
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = 'auth.html?redirect=withdraw';
+            } else {
+                // Load user data
+                loadUserData(user.uid);
+                emailInput.value = user.email;
+            }
+        });
+
+        // Load user balance
+        async function loadUserData(userId) {
+            try {
+                const userDoc = await db.collection('users').doc(userId).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    userBalanceEl.textContent = `₦${userData.balance?.toFixed(2) || '0.00'}`;
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        // Handle withdrawal submission
+        withdrawForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const accountNumber = document.getElementById('accountNumber').value;
+            const accountName = document.getElementById('accountName').value;
+            const bankName = document.getElementById('bankName').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const user = auth.currentUser;
+
+            try {
+                // Validate inputs
+                if (!accountNumber || !accountName || !bankName || !amount) {
+                    throw new Error('Please fill all fields');
+                }
+                if (amount < 2000) {
+                    throw new Error('Minimum withdrawal is ₦2,000');
+                }
+
+                // Show loading
+                submitBtn.disabled = true;
+                spinner.style.display = 'inline-block';
+                errorMessage.style.display = 'none';
+
+                // Check user balance
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                const userData = userDoc.data();
+                const balance = userData.balance || 0;
+
+                if (amount > balance) {
+                    throw new Error('Insufficient balance');
+                }
+
+                // Create withdrawal request
+                const withdrawalData = {
+                    userId: user.uid,
+                    email: user.email,
+                    accountNumber,
+                    accountName,
+                    bankName,
+                    amount,
+                    status: 'pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    processedAt: null,
+                    adminNote: ''
+                };
+
+                // Run transaction
+                await db.runTransaction(async (transaction) => {
+                    // 1. Reserve funds by deducting from balance
+                    transaction.update(db.collection('users').doc(user.uid), {
+                        balance: firebase.firestore.FieldValue.increment(-amount),
+                        pendingWithdrawal: firebase.firestore.FieldValue.increment(amount)
+                    });
+
+                    // 2. Create withdrawal request
+                    const withdrawalRef = db.collection('withdrawals').doc();
+                    transaction.set(withdrawalRef, withdrawalData);
+
+                    // 3. Record transaction
+                    const txRef = db.collection('transactions').doc();
+                    transaction.set(txRef, {
+                        userId: user.uid,
+                        type: 'withdrawal',
+                        amount,
+                        status: 'pending',
+                        reference: withdrawalRef.id,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+
+                // Success
+                alert('Withdrawal request submitted successfully! It will be processed within 24-48 hours.');
+                window.location.href = 'dashboard.html';
+
+            } catch (error) {
+                console.error('Withdrawal error:', error);
+                errorMessage.textContent = error.message;
+                errorMessage.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                spinner.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+  </html>
