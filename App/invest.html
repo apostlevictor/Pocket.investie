@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invest | Pocket Investie</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bronze: #cd7f32;
+            --silver: #c0c0c0;
+            --gold: #ffd700;
+            --platinum: #e5e4e2;
+            --primary: #2ecc71;
+            --dark: #2c3e50;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .invest-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .invest-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .plan-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            border-top: 5px solid var(--bronze);
+        }
+        .plan-card:hover {
+            transform: translateY(-5px);
+        }
+        .plan-card.silver {
+            border-top-color: var(--silver);
+        }
+        .plan-card.gold {
+            border-top-color: var(--gold);
+        }
+        .plan-card.platinum {
+            border-top-color: var(--platinum);
+        }
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .plan-duration {
+            color: #777;
+            margin-bottom: 1rem;
+        }
+        .plan-return {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+        .plan-minmax {
+            margin-bottom: 1rem;
+        }
+        .invest-form {
+            margin-top: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .cta-button {
+            display: block;
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+        .cta-button:hover {
+            background-color: #27ae60;
+        }
+        .balance-info {
+            background: white;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        .balance-amount {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .loading {
+            display: inline-block;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="invest-container">
+        <div class="invest-header">
+            <h1><i class="fas fa-coins"></i> Investment Plans</h1>
+            <p>Grow your wealth with our secure investment options</p>
+        </div>
+
+        <div class="balance-info">
+            Available Balance: <span class="balance-amount" id="userBalance">₦0.00</span>
+        </div>
+
+        <div class="plans-grid">
+            <!-- Bronze Plan (5 days) -->
+            <div class="plan-card">
+                <div class="plan-name">Bronze Plan</div>
+                <div class="plan-duration">5 Days Investment</div>
+                <div class="plan-return">50% ROI</div>
+                <div class="plan-minmax">
+                    <strong>Min:</strong> ₦15,000<br>
+                    <strong>Max:</strong> ₦500,000
+                </div>
+                <form class="invest-form" data-plan="bronze" data-duration="5" data-roi="0.5" data-min="15000" data-max="500000">
+                    <div class="form-group">
+                        <label for="bronze-amount">Amount (₦)</label>
+                        <input type="number" id="bronze-amount" min="15000" max="500000" placeholder="Enter amount" required>
+                    </div>
+                    <button type="submit" class="cta-button">
+                        Invest Now
+                        <i class="fas fa-spinner fa-spin loading" style="display: none;"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Silver Plan (7 days) -->
+            <div class="plan-card silver">
+                <div class="plan-name">Silver Plan</div>
+                <div class="plan-duration">7 Days Investment</div>
+                <div class="plan-return">65% ROI</div>
+                <div class="plan-minmax">
+                    <strong>Min:</strong> ₦50,000<br>
+                    <strong>Max:</strong> ₦2,000,000
+                </div>
+                <form class="invest-form" data-plan="silver" data-duration="7" data-roi="0.65" data-min="50000" data-max="2000000">
+                    <div class="form-group">
+                        <label for="silver-amount">Amount (₦)</label>
+                        <input type="number" id="silver-amount" min="50000" max="2000000" placeholder="Enter amount" required>
+                    </div>
+                    <button type="submit" class="cta-button">
+                        Invest Now
+                        <i class="fas fa-spinner fa-spin loading" style="display: none;"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Gold Plan (8 days) -->
+            <div class="plan-card gold">
+                <div class="plan-name">Gold Plan</div>
+                <div class="plan-duration">8 Days Investment</div>
+                <div class="plan-return">80% ROI</div>
+                <div class="plan-minmax">
+                    <strong>Min:</strong> ₦100,000<br>
+                    <strong>Max:</strong> ₦5,000,000
+                </div>
+                <form class="invest-form" data-plan="gold" data-duration="8" data-roi="0.8" data-min="100000" data-max="5000000">
+                    <div class="form-group">
+                        <label for="gold-amount">Amount (₦)</label>
+                        <input type="number" id="gold-amount" min="100000" max="5000000" placeholder="Enter amount" required>
+                    </div>
+                    <button type="submit" class="cta-button">
+                        Invest Now
+                        <i class="fas fa-spinner fa-spin loading" style="display: none;"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Platinum Plan (10 days) -->
+            <div class="plan-card platinum">
+                <div class="plan-name">Platinum Plan</div>
+                <div class="plan-duration">10 Days Investment</div>
+                <div class="plan-return">100% ROI</div>
+                <div class="plan-minmax">
+                    <strong>Min:</strong> ₦500,000<br>
+                    <strong>Max:</strong> ₦10,000,000
+                </div>
+                <form class="invest-form" data-plan="platinum" data-duration="10" data-roi="1" data-min="500000" data-max="10000000">
+                    <div class="form-group">
+                        <label for="platinum-amount">Amount (₦)</label>
+                        <input type="number" id="platinum-amount" min="500000" max="10000000" placeholder="Enter amount" required>
+                    </div>
+                    <button type="submit" class="cta-button">
+                        Invest Now
+                        <i class="fas fa-spinner fa-spin loading" style="display: none;"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="firebase.js"></script>
+
+    <script>
+        // Initialize Firebase
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const userBalanceEl = document.getElementById('userBalance');
+        const investForms = document.querySelectorAll('.invest-form');
+
+        // Check auth state
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'auth.html?redirect=invest';
+            } else {
+                // Load user balance
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    userBalanceEl.textContent = `₦${userData.balance?.toFixed(2) || '0.00'}`;
+                }
+
+                // Setup form handlers
+                investForms.forEach(form => {
+                    form.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        await handleInvestment(form, user.uid);
+                    });
+                });
+            }
+        });
+
+        // Handle investment submission
+        async function handleInvestment(form, userId) {
+            const button = form.querySelector('button');
+            const spinner = form.querySelector('.loading');
+            const amountInput = form.querySelector('input[type="number"]');
+            const amount = parseFloat(amountInput.value);
+            
+            // Get plan details
+            const plan = form.dataset.plan;
+            const duration = parseInt(form.dataset.duration);
+            const roi = parseFloat(form.dataset.roi);
+            const min = parseFloat(form.dataset.min);
+            const max = parseFloat(form.dataset.max);
+
+            try {
+                // Show loading
+                button.disabled = true;
+                spinner.style.display = 'inline-block';
+
+                // Validation
+                if (!amount || amount < min || amount > max) {
+                    throw new Error(`Amount must be between ₦${min.toLocaleString()} and ₦${max.toLocaleString()}`);
+                }
+
+                // Get user balance
+                const userDoc = await db.collection('users').doc(userId).get();
+                const userData = userDoc.data();
+                const balance = userData.balance || 0;
+
+                if (amount > balance) {
+                    throw new Error('Insufficient balance');
+                }
+
+                // Create investment record
+                const investmentData = {
+                    userId,
+                    plan,
+                    amount,
+                    duration,
+                    roi,
+                    expectedReturn: amount * roi,
+                    status: 'active',
+                    startDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    endDate: new Date(Date.now() + duration * 24 * 60 * 60 * 1000),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // Run transaction
+                await db.runTransaction(async (transaction) => {
+                    // 1. Deduct from user balance
+                    transaction.update(db.collection('users').doc(userId), {
+                        balance: firebase.firestore.FieldValue.increment(-amount),
+                        invested: firebase.firestore.FieldValue.increment(amount)
+                    });
+
+                    // 2. Create investment record
+                    const investmentRef = db.collection('investments').doc();
+                    transaction.set(investmentRef, investmentData);
+
+                    // 3. Record transaction
+                    const txRef = db.collection('transactions').doc();
+                    transaction.set(txRef, {
+                        userId,
+                        type: 'investment',
+                        amount,
+                        plan,
+                        status: 'completed',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+
+                // Success
+                alert(`Successfully invested ₦${amount.toLocaleString()} in ${plan} plan!`);
+                window.location.reload();
+
+            } catch (error) {
+                console.error('Investment error:', error);
+                alert('Error: ' + error.message);
+            } finally {
+                button.disabled = false;
+                spinner.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+<userI
