@@ -42,7 +42,7 @@ const firebaseConfig = {
   projectId: "pocket-investie-412fe",
   storageBucket: "pocket-investie-412fe.firebasestorage.app",
   messagingSenderId: "218119968222",
-  appId: "1:123456789012:web:abc123def456",
+  appId: "1:218119968222:web:522cc4142df3a90cb0f94f",
   measurementId: "G-Z4QQ0NC2QM"
 };
 
