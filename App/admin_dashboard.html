@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Pocket-Investie</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            background-color: #343a40;
+            min-height: 100vh;
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,.75);
+        }
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: #007bff;
+        }
+        .stat-card {
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-dark">
+                <div class="position-sticky pt-3">
+                    <h4 class="text-white px-3">Admin Panel</h4>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" id="dashboard-tab">
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="users-tab">
+                                User Management
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="withdrawals-tab">
+                                Pending Withdrawals
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="kyc-tab">
+                                KYC Approvals
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="transactions-tab">
+                                All Transactions
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="admin-balance-tab">
+                                Admin Balance
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Admin Dashboard</h1>
+                    <button id="logout-btn" class="btn btn-danger">Logout</button>
+                </div>
+
+                <!-- Dashboard Stats -->
+                <div id="dashboard-content">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Users</h5>
+                                    <h2 id="total-users">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Active Investments</h5>
+                                    <h2 id="total-investments">$0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Pending Withdrawals</h5>
+                                    <h2 id="pending-withdrawals">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">KYC Requests</h5>
+                                    <h2 id="kyc-requests">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activities -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5>Recent Activities</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Activity</th>
+                                            <th>Amount</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="activities-table">
+                                        <!-- Will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management Content -->
+                <div id="users-content" class="d-none">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between">
+                            <h5>All Users</h5>
+                            <input type="text" id="user-search" class="form-control w-25" placeholder="Search users...">
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Balance</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="users-table">
+                                        <!-- Will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Withdrawals Content -->
+                <div id="withdrawals-content" class="d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Pending Withdrawals</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>User</th>
+                                            <th>Amount</th>
+                                            <th>Method</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="withdrawals-table">
+                                        <!-- Will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KYC Approvals Content -->
+                <div id="kyc-content" class="d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>KYC Verification Requests</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Submitted</th>
+                                            <th>Document Type</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="kyc-table">
+                                        <!-- Will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Balance Content -->
+                <div id="admin-balance-content" class="d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Admin Withdrawal Balance</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Available Balance</h5>
+                                            <h2 id="admin-balance">₦10000000000</h2>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Withdraw Funds</h5>
+                                            <form id="admin-withdrawal-form">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Amount</label>
+                                                    <input type="number" class="form-control" id="withdrawal-amount" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Bank Details</label>
+                                                    <select class="form-select" id="bank-details" required>
+                                                        <option value="">Select Bank</option>
+                                                        <!-- Will be populated by JavaScript -->
+                                                    </select>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">Request Withdrawal</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- User Action Modal -->
+    <div class="modal fade" id="userActionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">User Actions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="confirmAction">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-functions-compat.js"></script>
+    
+    <script>
+        // Your Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5LqCUYEaAX5lR5x25D7nxu63loA-goFc",
+            authDomain: "pocket-investie-412fe.firebaseapp.com",
+            projectId: "pocket-investie-412fe",
+            storageBucket: "pocket-investie-412fe.firebasestorage.app",
+            messagingSenderId: "218119968222",
+            appId: "1:218119968222:web:522cc4142df3a90cb0f94f"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const functions = firebase.functions();
+
+        // Verify admin status on page load
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = "auth.html";
+                return;
+            }
+
+            // Check if user is admin
+            const token = await user.getIdTokenResult();
+            if (!token.claims.admin) {
+                alert("Access denied. Admin privileges required.");
+                await auth.signOut();
+                window.location.href = "auth.html";
+                return;
+            }
+
+            // Admin is authenticated - load data
+            loadDashboardStats();
+            loadRecentActivities();
+            setupTabNavigation();
+        });
+
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            auth.signOut().then(() => {
+                window.location.href = "auth.html";
+            });
+        });
+
+        // Tab Navigation
+        function setupTabNavigation() {
+            const tabs = ['dashboard', 'users', 'withdrawals', 'kyc', 'admin-balance'];
+            
+            tabs.forEach(tab => {
+                document.getElementById(`${tab}-tab`).addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Hide all content
+                    document.querySelectorAll('[id$="-content"]').forEach(content => {
+                        content.classList.add('d-none');
+                    });
+                    // Show selected content
+                    document.getElementById(`${tab}-content`).classList.remove('d-none');
+                    // Update active tab
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    e.target.classList.add('active');
+
+                    // Load data for the tab if needed
+                    if (tab === 'users') loadAllUsers();
+                    if (tab === 'withdrawals') loadPendingWithdrawals();
+                    if (tab === 'kyc') loadKYCRequests();
+                    if (tab === 'admin-balance') loadAdminBalance();
+                });
+            });
+        }
+
+        // Dashboard Statistics
+        async function loadDashboardStats() {
+            // Total Users
+            const usersSnapshot = await db.collection('users').count().get();
+            document.getElementById('total-users').textContent = usersSnapshot.data().count;
+
+            // Total Investments
+            const investmentsSnapshot = await db.collection('investments').where('status', '==', 'active').get();
+            let totalInvestments = 0;
+            investmentsSnapshot.forEach(doc => {
+                totalInvestments += parseFloat(doc.data().amount);
+            });
+            document.getElementById('total-investments').textContent = `$${totalInvestments.toFixed(2)}`;
+
+            // Pending Withdrawals
+            const withdrawalsSnapshot = await db.collection('withdrawals').where('status', '==', 'pending').count().get();
+            document.getElementById('pending-withdrawals').textContent = withdrawalsSnapshot.data().count;
+
+            // KYC Requests
+            const kycSnapshot = await db.collection('kyc').where('status', '==', 'pending').count().get();
+            document.getElementById('kyc-requests').textContent = kycSnapshot.data().count;
+        }
+
+        // Recent Activities
+        async function loadRecentActivities() {
+            const activitiesRef = db.collection('activities').orderBy('timestamp', 'desc').limit(10);
+            const snapshot = await activitiesRef.get();
+            const tableBody = document.getElementById('activities-table');
+            tableBody.innerHTML = '';
+
+            snapshot.forEach(doc => {
+                const activity = doc.data();
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${activity.userName || activity.userEmail}</td>
+                    <td>${activity.type}</td>
+                    <td>${activity.amount ? '$' + activity.amount : 'N/A'}</td>
+                    <td>${new Date(activity.timestamp?.toDate()).toLocaleString()}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // User Management
+        async function loadAllUsers() {
+            const usersRef = db.collection('users');
+            const snapshot = await usersRef.get();
+            const tableBody = document.getElementById('users-table');
+            tableBody.innerHTML = '';
+
+            snapshot.forEach(doc => {
+                const user = doc.data();
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${doc.id.substring(0, 8)}</td>
+                    <td>${user.name || 'N/A'}</td>
+                    <td>${user.email}</td>
+                    <td>$${user.balance?.toFixed(2) || '0.00'}</td>
+                    <td>
+                        <span class="badge ${user.status === 'active' ? 'bg-success' : user.status === 'suspended' ? 'bg-warning' : 'bg-danger'}">
+                            ${user.status || 'inactive'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary view-user" data-id="${doc.id}">View</button>
+           <button class="btn btn-sm btn-warning suspend-user" data-id="${doc.id}">${user.status === 'suspended' ? 'Unsuspend' : 'Suspend'}</button>
+                        <button class="btn btn-sm btn-danger ban-user" data-id="${doc.id}">Ban</button>
+                        <button class="btn btn-sm btn-info impersonate-user" data-id="${doc.id}">Impersonate</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Add event listeners to action buttons
+            document.querySelectorAll('.view-user').forEach(btn => {
+                btn.addEventListener('click', (e) => viewUserDetails(e.target.dataset.id));
+            });
+            document.querySelectorAll('.suspend-user').forEach(btn => {
+                btn.addEventListener('click', (e) => toggleSuspendUser(e.target.dataset.id));
+            });
+            document.querySelectorAll('.ban-user').forEach(btn => {
+                btn.addEventListener('click', (e) => banUser(e.target.dataset.id));
+            });
+            document.querySelectorAll('.impersonate-user').forEach(btn => {
+                btn.addEventListener('click', (e) => impersonateUser(e.target.dataset.id));
+            });
+        }
+
+        async function viewUserDetails(userId) {
+            const userDoc = await db.collection('users').doc(userId).get();
+            const user = userDoc.data();
+            
+            document.getElementById('modalTitle').textContent = `User Details: ${user.name || user.email}`;
+            document.getElementById('modalBody').innerHTML = `
+                <div class="mb-3">
+                    <strong>Email:</strong> ${user.email}
+                </div>
+                <div class="mb-3">
+                    <strong>Phone:</strong> ${user.phone || 'N/A'}
+                </div>
+                <div class="mb-3">
+                    <strong>Balance:</strong> $${user.balance?.toFixed(2) || '0.00'}
+                </div>
+                <div class="mb-3">
+                    <strong>Status:</strong> <span class="badge ${user.status === 'active' ? 'bg-success' : user.status === 'suspended' ? 'bg-warning' : 'bg-danger'}">
+                        ${user.status || 'inactive'}
+                    </span>
+                </div>
+                <div class="mb-3">
+                    <strong>KYC Status:</strong> ${user.kycVerified ? '<span class="badge bg-success">Verified</span>' : '<span class="badge bg-warning">Pending</span>'}
+                </div>
+                <div class="mb-3">
+                    <strong>Joined:</strong> ${new Date(user.createdAt?.toDate()).toLocaleString()}
+                </div>
+            `;
+            
+            document.getElementById('confirmAction').classList.add('d-none');
+            const modal = new bootstrap.Modal(document.getElementById('userActionModal'));
+            modal.show();
+        }
+
+        async function toggleSuspendUser(userId) {
+            const userDoc = await db.collection('users').doc(userId).get();
+            const currentStatus = userDoc.data().status;
+            const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+            
+            await db.collection('users').doc(userId).update({ status: newStatus });
+            alert(`User ${newStatus === 'suspended' ? 'suspended' : 'unsuspended'} successfully`);
+            loadAllUsers();
+        }
+
+        async function banUser(userId) {
+            if (confirm('Are you sure you want to ban this user?')) {
+                await db.collection('users').doc(userId).update({ status: 'banned' });
+                alert('User banned successfully');
+                loadAllUsers();
+            }
+        }
+
+        async function impersonateUser(userId) {
+            if (confirm('Impersonate this user? You will be logged out as admin.')) {
+                const impersonate = functions.httpsCallable('impersonateUser');
+                const result = await impersonate({ userId });
+                window.location.href = "dashboard.html";
+            }
+  }
+
+  // Pending Withdrawals
+        async function loadPendingWithdrawals() {
+            const withdrawalsRef = db.collection('withdrawals').where('status', '==', 'pending').orderBy('createdAt', 'desc');
+            const snapshot = await withdrawalsRef.get();
+            const tableBody = document.getElementById('withdrawals-table');
+            tableBody.innerHTML = '';
+
+            snapshot.forEach(doc => {
+                const withdrawal = doc.data();
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${doc.id.substring(0, 8)}</td>
+                    <td>${withdrawal.userName || withdrawal.userEmail}</td>
+                    <td>$${withdrawal.amount.toFixed(2)}</td>
+                    <td>${withdrawal.method}</td>
+                    <td>${new Date(withdrawal.createdAt?.toDate()).toLocaleString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success approve-withdrawal" data-id="${doc.id}">Approve</button>
+                        <button class="btn btn-sm btn-danger reject-withdrawal" data-id="${doc.id}">Reject</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Add event listeners to action buttons
+            document.querySelectorAll('.approve-withdrawal').forEach(btn => {
+                btn.addEventListener('click', (e) => processWithdrawal(e.target.dataset.id, 'approved'));
+            });
+            document.querySelectorAll('.reject-withdrawal').forEach(btn => {
+                btn.addEventListener('click', (e) => processWithdrawal(e.target.dataset.id, 'rejected'));
+            });
+        }
+
+        async function processWithdrawal(withdrawalId, action) {
+            if (confirm(`Are you sure you want to ${action} this withdrawal?`)) {
+                await db.collection('withdrawals').doc(withdrawalId).update({ status: action });
+                alert(`Withdrawal ${action} successfully`);
+                loadPendingWithdrawals();
+                loadDashboardStats();
+            }
+        }
+
+      // KYC Approvals
+        async function loadKYCRequests() {
+            const kycRef = db.collection('kyc').where('status', '==', 'pending').orderBy('submittedAt', 'desc');
+            const snapshot = await kycRef.get();
+            const tableBody = document.getElementById('kyc-table');
+            tableBody.innerHTML = '';
+
+            snapshot.forEach(doc => {
+                const kyc = doc.data();
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${kyc.userName || kyc.userEmail}</td>
+                    <td>${new Date(kyc.submittedAt?.toDate()).toLocaleString()}</td>
+                    <td>${kyc.documentType}</td>
+                    <td>
+                        <span class="badge bg-warning">Pending</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-success approve-kyc" data-id="${doc.id}">Approve</button>
+                        <button class="btn btn-sm btn-danger reject-kyc" data-id="${doc.id}">Reject</button>
+                        <button class="btn btn-sm btn-info view-kyc" data-id="${doc.id}">View</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Add event listeners to action buttons
+            document.querySelectorAll('.approve-kyc').forEach(btn => {
+                btn.addEventListener('click', (e) => processKYC(e.target.dataset.id, 'approved'));
+            });
+            document.querySelectorAll('.reject-kyc').forEach(btn => {
+                btn.addEventListener('click', (e) => processKYC(e.target.dataset.id, 'rejected'));
+            });
+            document.querySelectorAll('.view-kyc').forEach(btn => {
+                btn.addEventListener('click', (e) => viewKYCDetails(e.target.dataset.id));
+            });
+        }
+
+        async function processKYC(kycId, action) {
+            if (confirm(`Are you sure you want to ${action} this KYC?`)) {
+                const kycDoc = await db.collection('kyc').doc(kycId).get();
+                const userId = kycDoc.data().userId;
+                
+                // Update KYC status
+                await db.collection('kyc').doc(kycId).update({ status: action });
+                
+                // Update user's KYC status
+                await db.collection('users').doc(userId).update({ 
+                    kycVerified: action === 'approved',
+                    kycStatus: action
+                });
+                
+                alert(`KYC ${action} successfully`);
+                loadKYCRequests();
+            }
+        }
+
+        async function viewKYCDetails(kycId) {
+            const kycDoc = await db.collection('kyc').doc(kycId).get();
+            const kyc = kycDoc.data();
+            
+            document.getElementById('modalTitle').textContent = `KYC Documents: ${kyc.userName || kyc.userEmail}`;
+            document.getElementById('modalBody').innerHTML = `
+                <div class="mb-3">
+                    <strong>Document Type:</strong> ${kyc.documentType}
+                </div>
+                <div class="mb-3">
+                    <strong>Document Number:</strong> ${kyc.documentNumber}
+                </div>
+                <div class="mb-3">
+                    <strong>Submitted:</strong> ${new Date(kyc.submittedAt?.toDate()).toLocaleString()}
+                </div>
+                <div class="mb-3">
+                    <strong>Front Document:</strong><br>
+                    <img src="${kyc.frontDocumentUrl}" class="img-fluid" style="max-height: 300px;">
+                </div>
+                <div class="mb-3">
+                    <strong>Back Document:</strong><br>
+                    <img src="${kyc.backDocumentUrl || 'N/A'}" class="img-fluid" style="max-height: 300px;">
+                </div>
+                <div class="mb-3">
+                    <strong>Selfie:</strong><br>
+                    <img src="${kyc.selfieUrl}" class="img-fluid" style="max-height: 300px;">
+                </div>
+            `',
+            
+            document.getElementById('confirmAction').classList.add('d-none');
+            const modal = new bootstrap.Modal(document.getElementById('userActionModal'));
+            modal.show();
+        }
+
+        // Admin Balance
+        async function loadAdminBalance() {
+            const adminDoc = await db.collection('admin').doc('balance').get();
+            const balance = adminDoc.data()?.amount || 0;
+            document.getElementById('admin-balance').textContent = `$${balance.toFixed(2)}`;
+
+      // Load bank details
+            const banksSnapshot = await db.collection('admin_banks').get();
+            const bankSelect = document.getElementById('bank-details');
+            bankSelect.innerHTML = '<option value="">Select Bank</option>';
+            
+            banksSnapshot.forEach(doc => {
+                const bank = doc.data();
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = `${bank.bankName} (${bank.accountNumber})`;
+                bankSelect.appendChild(option);
+            });
+
+            // Withdrawal form submission
+            document.getElementById('admin-withdrawal-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const amount = parseFloat(document.getElementById('withdrawal-amount').value);
+                const bankId = document.getElementById('bank-details').value;
+                
+                if (!bankId) {
+                    alert('Please select bank details');
+                    return;
+                }
+
+                const balance = parseFloat(document.getElementById('admin-balance').textContent.substring(1));
+                if (amount > balance) {
+                    alert('Insufficient balance');
+                    return;
+                }
+
+                if (confirm(`Request withdrawal of $${amount.toFixed(2)}?`)) {
+                    try {
+                        const bankDoc = await db.collection('admin_banks').doc(bankId).get();
+                        const bank = bankDoc.data();
+                        
+                        await db.collection('admin_withdrawals').add({
+                            amount,
+                            bankDetails: `${bank.bankName} - ${bank.accountNumber}`,
+                            status: 'pending',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        // Update balance
+                        await db.collection('admin').doc('balance').update({
+                            amount: firebase.firestore.FieldValue.increment(-amount)
+                        });
+                        
+                        alert('Withdrawal request submitted successfully');
+                        document.getElementById('admin-withdrawal-form').reset();
+                        loadAdminBalance();
+                    } catch (error) {
+                        console.error('Withdrawal error:', error);
+                        alert('Withdrawal failed: ' + error.message);
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
