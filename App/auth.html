@@ -223,6 +223,35 @@
                 }
             }
         });
-    </script>
+    <script>
+const ADMIN_LOGIN = {
+  email: "pocket-investie001",
+  password: "Ch1k@ms__00*****90"
+};
+
+async function handleLogin(email, password) {
+  try {
+    if (email === ADMIN_LOGIN.email && password === ADMIN_LOGIN.password) {
+      const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+      window.location.href = "admin_dashboard.html";
+      return;
+    }
+    
+    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+    window.location.href = "dashboard.html";
+    
+  } catch (error) {
+    console.error("Login error:", error);
+    alert("Login failed: " + error.message);
+  }
+}
+
+document.getElementById('login-button').addEventListener('click', (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  handleLogin(email, password);
+});
+</script>
 </body>
   </html>
