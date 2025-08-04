@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket Investie - Invest Smart, Grow Your Wealth</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #2a4d69);
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .investment-card {
+            transition: all 0.3s ease;
+            border-top: 4px solid;
+        }
+        .investment-card:hover {
+            transform: scale(1.03);
+        }
+        .bronze {
+            border-color: #cd7f32;
+        }
+        .silver {
+            border-color: #c0c0c0;
+        }
+        .gold {
+            border-color: #ffd700;
+        }
+        .platinum {
+            border-color: #e5e4e2;
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-chart-line text-blue-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-900">Pocket Investie</span>
+                    </div>
+                </div>
+                <div class="hidden md:ml-6 md:flex md:items-center space-x-8">
+                    <a href="#features" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Features</a>
+                    <a href="#investments" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Investments</a>
+                    <a href="#faq" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">FAQ</a>
+                    <a href="auth.html" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300">
+                        Login / Register
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient text-white py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="md:w-1/2 mb-10 md:mb-0">
+                    <h1 class="text-4xl md:text-5xl font-bold leading-tight mb-4">Invest Smart, Grow Your Wealth</h1>
+                    <p class="text-xl mb-8">Pocket Investie is a secure Naira-based investment platform developed and managed by Victorex Binary Option Traders.</p>
+                    <div class="flex space-x-4">
+                        <a href="auth.html" class="bg-white text-blue-600 hover:bg-gray-100 px-6 py-3 rounded-md font-bold text-lg transition duration-300">
+                            Get Started
+                        </a>
+                    </div>
+                </div>
+                <div class="md:w-1/2 flex justify-center">
+                    <img src="https://illustrations.popsy.co/amber/digital-currency.svg" alt="Investment Illustration" class="w-full max-w-md">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-12 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <div class="text-blue-600 text-3xl font-bold mb-2" id="total-users">2,500+</div>
+                    <div class="text-gray-600">Active Investors</div>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <div class="text-blue-600 text-3xl font-bold mb-2">₦15,000</div>
+                    <div class="text-gray-600">Minimum Investment</div>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <div class="text-blue-600 text-3xl font-bold mb-2">50%</div>
+                    <div class="text-gray-600">Average ROI</div>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <div class="text-blue-600 text-3xl font-bold mb-2">5-7 Days</div>
+                    <div class="text-gray-600">Payout Period</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-center mb-12">Why Choose Pocket Investie?</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="feature-card bg-white p-8 rounded-lg shadow-md transition duration-300">
+                    <div class="text-blue-600 text-4xl mb-4">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Secure Platform</h3>
+                    <p class="text-gray-600">Bank-level security with Paystack integration for all transactions. Your funds are always protected.</p>
+                </div>
+                <div class="feature-card bg-white p-8 rounded-lg shadow-md transition duration-300">
+                    <div class="text-blue-600 text-4xl mb-4">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">High Returns</h3>
+                    <p class="text-gray-600">Earn up to 50% ROI on your investments with our carefully managed trading strategies.</p>
+                </div>
+                <div class="feature-card bg-white p-8 rounded-lg shadow-md transition duration-300">
+                    <div class="text-blue-600 text-4xl mb-4">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Fast Withdrawals</h3>
+                    <p class="text-gray-600">Withdraw your profits every Friday and Saturday with automatic approval processing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Investment Plans -->
+    <section id="investments" class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-center mb-12">Our Investment Plans</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Bronze Plan -->
+                <div class="investment-card bronze bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="p-6">
+                        <div class="text-center mb-4">
+                            <span class="inline-block bg-amber-100 text-amber-800 text-sm font-semibold px-3 py-1 rounded-full">Bronze</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-center mb-2">50% ROI</h3>
+                        <p class="text-gray-500 text-center mb-4">5-7 Days Duration</p>
+                        <div class="text-center mb-6">
+                            <span class="text-4xl font-bold">₦15,000</span>
+                            <span class="text-gray-500"> - ₦500,000</span>
+                        </div>
+                        <ul class="mb-6 space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>Minimum ₦15,000</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>50% Return</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>5-7 Days Duration</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>Priority Support</span>
+                            </li>
+                        </ul>
+                        <a href="auth.html" class="block w-full bg-amber-600 hover:bg-amber-700 text-white text-center py-2 rounded-md font-medium transition duration-300">
+                            Invest Now
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Silver Plan -->
+                <div class="investment-card silver bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="p-6">
+                        <div class="text-center mb-4">
+                            <span class="inline-block bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">Silver</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-center mb-2">70% ROI</h3>
+                        <p class="text-gray-500 text-center mb-4">7 Days Duration</p>
+                        <div class="text-center mb-6">
+                            <span class="text-4xl font-bold">₦500,000</span>
+                            <span class="text-gray-500"> - ₦2,000,000</span>
+                        </div>
+                        <ul class="mb-6 space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>Minimum ₦500,000</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>70% Return</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>7 Days Duration</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>Dedicated Account Manager</span>
+                            </li>
+                        </ul>
+                        <a href="auth.html" class="block w-full bg-gray-600 hover:bg-gray-700 text-white text-center py-2 rounded-md font-medium transition duration-300">
+                            Invest Now
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Gold Plan -->
+                <div class="investment-card gold bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="p-6">
+                        <div class="text-center mb-4">
+                            <span class="inline-block bg-yellow-100 text-yellow-800 text-sm font-semibold px-3 py-1 rounded-full">Gold</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-center mb-2">85% ROI</h3>
+                        <p class="text-gray-500 text-center mb-4">7 Days Duration</p>
+                        <div class="text-center mb-6">
+                            <span class="text-4xl font-bold">₦2,000,000</span>
+                            <span class="text-gray-500"> - ₦5,000,000</span>
+                        </div>
+                        <ul class="mb-6 space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>Minimum ₦2,000,000</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>85% Return</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>7 Days Duration</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>VIP Support</span>
+                            </li>
+                        </ul>
+                        <a href="auth.html" class="block w-full bg-yellow-600 hover:bg-yellow-700 text-white text-center py-2 rounded-md font-medium transition duration-300">
+                            Invest Now
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Platinum Plan -->
+                <div class="investment-card platinum bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="p-6">
+                        <div class="text-center mb-4">
+                            <span class="inline-block bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">Platinum</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-center mb-2">120% ROI</h3>
+                        <p class="text-gray-500 text-center mb-4">10 Days Duration</p>
+                        <div class="text-center mb-6">
+                            <span class="text-4xl font-bold">₦5,000,000</span>
+                            <span class="text-gray-500"> - ₦10,000,000</span>
+                        </div>
+                        <ul class="mb-6 space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>Minimum ₦5,000,000</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>120% Return</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>10 Days Duration</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                <span>Executive Account Manager</span>
+                            </li>
+                        </ul>
+                        <a href="auth.html" class="block w-full bg-blue-800 hover:bg-blue-900 text-white text-center py-2 rounded-md font-medium transition duration-300">
+                            Invest Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-16 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-bold text-lg mb-2">💰 What is the minimum deposit?</h3>
+                    <p class="text-gray-600">₦2,000 is the minimum deposit and deposits are credited instantly through our Paystack integration.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-bold text-lg mb-2">📈 What is the minimum investment?</h3>
+                    <p class="text-gray-600">₦15,000 with a 50% return in 5-7 days for our Bronze plan. Higher tiers offer even better returns.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-bold text-lg mb-2">🏧 How do I withdraw?</h3>
+                    <p class="text-gray-600">Simply fill the withdrawal form from your dashboard. Withdrawals are processed every Friday and Saturday.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-bold text-lg mb-2">💼 How are transactions handled?</h3>
+                    <p class="text-gray-600">Deposits are handled via Paystack and wallet updates instantly. Withdrawals are funded once approved by our financial management team.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-bold text-lg mb-2">⏳ When will I get my profits?</h3>
+                    <p class="text-gray-600">Profits may come at any time but will not exceed 7 days after investment for Bronze plan, and up to 10 days for Platinum.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-bold text-lg mb-2">🛡️ Is there investment protection?</h3>
+                    <p class="text-gray-600">Yes, we only accept 200 user investments per day to reduce fraud and ensure proper fund management.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 bg-blue-600 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold mb-6">Ready to Start Investing?</h2>
+            <p class="text-xl mb-8 max-w-3xl mx-auto">Join thousands of Nigerians growing their wealth with Pocket Investie's secure investment platform.</p>
+            <a href="auth.html" class="inline-block bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-md font-bold text-lg transition duration-300">
+                Get Started Now
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-chart-line text-blue-400 mr-2"></i>
+                        Pocket Investie
+                    </h3>
+                    <p class="text-gray-400">"Invest Smart, Grow Your Wealth" - A secure Naira-based investment platform.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Support</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope text-blue-400 mr-2"></i>
+                            <a href="mailto:victorexbinarysignalbot@gmail.com" class="text-gray-400 hover:text-white">victorexbinarysignalbot@gmail.com</a>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone text-blue-400 mr-2"></i>
+                            <a href="tel:+2347062791952" class="text-gray-400 hover:text-white">+234 706 279 1952</a>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="auth.html" class="text-gray-400 hover:text-white">Login/Register</a></
+                          <li><a href="#investments" class="text-gray-400 hover:text-white">Investment Plans</a></li>
+                        <li><a href="#faq" class="text-gray-400 hover:text-white">FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>© 2025 Pocket Investie. All rights reserved. Developed and managed by Victorex Binary Option Traders.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Firebase configuration - Replace with your actual Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5LqCUYEaAX5lR5x25D7nxu63loA-goFc",
+            authDomain: "pocket-investie-412fe.firebaseapp.com",
+            projectId: "pocket-investie-412fe",
+            storageBucket: "pocket-investie-412fe.firebasestorage.app",
+            messagingSenderId: "218119968222",
+            appId: "1:218119968222:web:522cc4142df3a90cb0f94f",
+            measurementId: "G-Z4QQ0NC2QM"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Get total users count
+        db.collection('users').get().then((querySnapshot) => {
+            document.getElementById('total-users').textContent = querySnapshot.size + '+';
+        });
+
+        // Check if user is logged in to modify navigation
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // Change login button to dashboard link
+                const loginButtons = document.querySelectorAll('a[href="auth.html"]');
+                loginButtons.forEach(button => {
+                    button.href = 'dashboard.html';
+                    button.textContent = 'Go to Dashboard';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
