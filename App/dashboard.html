@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Dashboard - Pocket Investie</title>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-100 font-sans">
+  <!-- Dashboard Navbar -->
+  <nav class="bg-blue-600 p-4 text-white flex justify-between items-center">
+    <h1 class="text-2xl font-bold">Pocket Investie</h1>
+    <button onclick="logout()" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-gray-100">Logout</button>
+  </nav>
+
+  <!-- Main Dashboard -->
+  <div class="max-w-7xl mx-auto py-10 px-4 grid grid-cols-1 md:grid-cols-4 gap-6">
+    <!-- Sidebar -->
+    <aside class="bg-white shadow-md rounded-lg p-4 space-y-4">
+      <h2 class="text-lg font-bold text-gray-700">Menu</h2>
+      <ul class="space-y-2">
+        <li><button onclick="showSection('dashboard')" class="text-left w-full">🏠 Dashboard</button></li>
+        <li><button onclick="showSection('deposit')">💰 Deposit</button></li>
+        <li><button onclick="showSection('withdraw')">🏧 Withdraw</button></li>
+        <li><button onclick="showSection('invest')">📈 Invest</button></li>
+        <li><button onclick="showSection('profile')">👤 Profile</button></li>
+        <li><button onclick="showSection('history')">🕓 Transactions</button></li>
+      </ul>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="md:col-span-3 bg-white shadow-md rounded-lg p-6">
+      <div id="dashboard-section">
+        <h2 class="text-2xl font-bold mb-4">Welcome, <span id="user-name">User</span> 👋</h2>
+        <p class="text-gray-600 mb-2">Wallet Balance: <strong id="wallet-balance">₦0</strong></p>
+        <p class="text-gray-600">Total Investments: <strong id="investment-total">₦0</strong></p>
+      </div>
+
+      <!-- Deposit -->
+      <div id="deposit-section" class="hidden">
+        <h2 class="text-xl font-bold mb-4">Deposit Funds</h2>
+        <input id="deposit-amount" type="number" placeholder="Enter amount (₦)" class="border p-2 rounded w-full mb-4">
+        <button onclick="deposit()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Deposit</button>
+      </div>
+
+      <!-- Withdraw -->
+      <div id="withdraw-section" class="hidden">
+        <h2 class="text-xl font-bold mb-4">Withdraw Funds</h2>
+        <input id="withdraw-amount" type="number" placeholder="Enter amount (₦)" class="border p-2 rounded w-full mb-4">
+        <button onclick="withdraw()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Withdraw</button>
+      </div>
+
+      <!-- Invest -->
+      <div id="invest-section" class="hidden">
+        <h2 class="text-xl font-bold mb-4">Select Investment Plan</h2>
+        <select id="plan-select" class="w-full border p-2 rounded mb-4">
+          <option value="bronze">Bronze - ₦15,000 - ₦500,000 (50% ROI)</option>
+          <option value="silver">Silver - ₦500,000 - ₦2M (70% ROI)</option>
+          <option value="gold">Gold - ₦2M - ₦5M (85% ROI)</option>
+          <option value="platinum">Platinum - ₦5M - ₦10M (120% ROI)</option>
+        </select>
+        <input id="invest-amount" type="number" placeholder="Amount" class="border p-2 rounded w-full mb-4">
+        <button onclick="invest()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Invest</button>
+      </div>
+
+      <!-- Profile -->
+      <div id="profile-section" class="hidden">
+        <h2 class="text-xl font-bold mb-4">Profile</h2>
+        <p>Email: <span id="user-email" class="text-gray-600"></span></p>
+        <p>User ID: <span id="user-id" class="text-gray-600"></span></p>
+      </div>
+
+      <!-- Transactions -->
+      <div id="history-section" class="hidden">
+        <h2 class="text-xl font-bold mb-4">Transaction History</h2>
+        <ul id="transaction-history" class="text-gray-700 space-y-2"></ul>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyA5LqCUYEaAX5lR5x25D7nxu63loA-goFc",
+      authDomain: "pocket-investie-412fe.firebaseapp.com",
+      projectId: "pocket-investie-412fe",
+      storageBucket: "pocket-investie-412fe.firebasestorage.app",
+      messagingSenderId: "218119968222",
+      appId: "1:218119968222:web:522cc4142df3a90cb0f94f"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Sections Toggle
+    function showSection(id) {
+      ['dashboard', 'deposit', 'withdraw', 'invest', 'profile', 'history'].forEach(sec => {
+        document.getElementById(`${sec}-section`).classList.add('hidden');
+      });
+      document.getElementById(`${id}-section`).classList.remove('hidden');
+    }
+
+    // Get User Data
+    auth.onAuthStateChanged(async user => {
+      if (user) {
+        document.getElementById('user-name').innerText = user.email.split('@')[0];
+        document.getElementById('user-email').innerText = user.email;
+        document.getElementById('user-id').innerText = user.uid;
+
+        const doc = await db.collection("users").doc(user.uid).get();
+        if (doc.exists) {
+          const data = doc.data();
+          document.getElementById('wallet-balance').innerText = `₦${data.wallet || 0}`;
+          document.getElementById('investment-total').innerText = `₦${data.totalInvestment || 0}`;
+        }
+      } else {
+        window.location.href = "auth.html";
+      }
+    });
+
+    // Deposit Logic
+    async function deposit() {
+      const amount = Number(document.getElementById('deposit-amount').value);
+      const user = auth.currentUser;
+      const userRef = db.collection("users").doc(user.uid);
+      await userRef.update({ wallet: firebase.firestore.FieldValue.increment(amount) });
+      alert("Deposit successful!");
+      location.reload();
+    }
+
+    // Withdraw Logic
+    async function withdraw() {
+      const amount = Number(document.getElementById('withdraw-amount').value);
+      const user = auth.currentUser;
+      const userRef = db.collection("users").doc(user.uid);
+      const doc = await userRef.get();
+      if (doc.data().wallet >= amount) {
+        await userRef.update({ wallet: firebase.firestore.FieldValue.increment(-amount) });
+        alert("Withdrawal request submitted!");
+        location.reload();
+      } else {
+        alert("Insufficient funds!");
+      }
+    }
+
+    // Invest Logic
+    async function invest() {
+      const amount = Number(document.getElementById('invest-amount').value);
+      const plan = document.getElementById('plan-select').value;
+      const user = auth.currentUser;
+      const userRef = db.collection("users").doc(user.uid);
+
+      const doc = await userRef.get();
+      if (doc.data().wallet >= amount) {
+        await userRef.update({
+          wallet: firebase.firestore.FieldValue.increment(-amount),
+          totalInvestment: firebase.firestore.FieldValue.increment(amount),
+        });
+        await db.collection("investments").add({
+          userId: user.uid,
+          amount,
+          plan,
+          createdAt: new Date()
+        });
+        alert("Investment successful!");
+        location.reload();
+      } else {
+        alert("Insufficient funds!");
+      }
+    }
+
+    // Logout
+    function logout() {
+      auth.signOut().then(() => location.href = "auth.html");
+    }
+  </script>
+</body>
+</html>
