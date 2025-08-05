@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket Investie - Authentication</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        .auth-gradient {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #2a4d69);
+        }
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            width: 100%;
+            max-width: 450px;
+        }
+        .auth-tabs {
+            display: flex;
+            border-bottom: 2px solid #f1f1f1;
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 18px;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #6b7280;
+        }
+        .auth-tab.active {
+            color: #2563eb;
+            border-bottom: 3px solid #2563eb;
+        }
+        .form-container {
+            padding: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+        }
+        .form-input {
+            padding-left: 45px;
+            height: 55px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            width: 100%;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+        .form-input:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+        }
+        .auth-btn {
+            background: linear-gradient(to right, #1a2a6c, #b21f1f);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            font-size: 17px;
+            letter-spacing: 0.5px;
+        }
+        .auth-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        .error-message {
+            color: #ef4444;
+            font-size: 14px;
+            margin-top: 8px;
+            display: none;
+            padding: 10px;
+            background: #fee2e2;
+            border-radius: 8px;
+            border-left: 4px solid #ef4444;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+        .brand-logo i {
+            font-size: 32px;
+            margin-right: 12px;
+            color: #2563eb;
+        }
+        .brand-logo span {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(to right, #1a2a6c, #b21f1f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .slogan {
+            text-align: center;
+            font-size: 18px;
+            color: #4b5563;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+        .success-message {
+            background: #dcfce7;
+            color: #166534;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #22c55e;
+            display: none;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <div class="auth-gradient min-h-screen flex items-center justify-center p-4">
+        <div class="auth-card">
+            <div class="brand-logo">
+                <i class="fas fa-chart-line"></i>
+                <span>Pocket Investie</span>
+            </div>
+            <p class="slogan">Invest Smart, Grow Your Wealth</p>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="login-tab">Login</div>
+                <div class="auth-tab" id="register-tab">Register</div>
+            </div>
+            
+            <!-- Login Form -->
+            <div class="form-container" id="login-form">
+                <div id="login-success" class="success-message">Login successful! Redirecting to dashboard...</div>
+                
+                <div class="input-group">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="login-email" class="form-input" placeholder="Email Address">
+                </div>
+                <div id="login-email-error" class="error-message"></div>
+                
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="login-password" class="form-input" placeholder="Password">
+                    <i class="fas fa-eye password-toggle" id="login-toggle-password"></i>
+                </div>
+                <div id="login-password-error" class="error-message"></div>
+                
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="remember-me" class="mr-2 h-4 w-4">
+                        <label for="remember-me" class="text-gray-600">Remember me</label>
+                    </div>
+                    <a href="#" class="text-blue-600 hover:underline">Forgot password?</a>
+                </div>
+                
+                <button id="login-btn" class="auth-btn mb-4">
+                    <span id="login-btn-text">Login to Your Account</span>
+                    <span id="login-spinner" class="hidden"><i class="fas fa-spinner fa-spin mr-2"></i> Authenticating...</span>
+                </button>
+                
+                <p class="text-center text-gray-600 mt-6">
+                    Don't have an account? <span id="switch-to-register" class="text-blue-600 font-medium cursor-pointer hover:underline">Create Account</span>
+                </p>
+            </div>
+            
+            <!-- Register Form -->
+            <div class="form-container hidden" id="register-form">
+                <div id="register-success" class="success-message">Registration successful! Redirecting to dashboard...</div>
+                
+                <div class="input-group">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="register-name" class="form-input" placeholder="Full Name">
+                </div>
+                <div id="register-name-error" class="error-message"></div>
+                
+                <div class="input-group">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="register-email" class="form-input" placeholder="Email Address">
+                </div>
+                <div id="register-email-error" class="error-message"></div>
+                
+                <div class="input-group">
+                    <i class="fas fa-phone input-icon"></i>
+                    <input type="tel" id="register-phone" class="form-input" placeholder="Phone Number">
+                </div>
+                <div id="register-phone-error" class="error-message"></div>
+                
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="register-password" class="form-input" placeholder="Password (min. 8 characters)">
+                    <i class="fas fa-eye password-toggle" id="register-toggle-password"></i>
+                </div>
+                <div id="register-password-error" class="error-message"></div>
+                
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="register-confirm-password" class="form-input" placeholder="Confirm Password">
+                </div>
+                <div id="register-confirm-password-error" class="error-message"></div>
+                
+                <div class="mb-6">
+                    <div class="flex items-start">
+                        <input type="checkbox" id="terms" class="mr-2 mt-1 h-4 w-4">
+                        <label for="terms" class="text-gray-600 text-sm">
+                            I agree to the <a href="#" class="text-blue-600 hover:underline">Terms & Conditions</a> and <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>
+                        </label>
+                    </div>
+                </div>
+                
+                <button id="register-btn" class="auth-btn mb-4">
+                    <span id="register-btn-text">Create Investment Account</span>
+                    <span id="register-spinner" class="hidden"><i class="fas fa-spinner fa-spin mr-2"></i> Creating account...</span>
+                </button>
+                
+                <p class="text-center text-gray-600 mt-6">
+                    Already have an account? <span id="switch-to-login" class="text-blue-600 font-medium cursor-pointer hover:underline">Login Here</span>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Firebase configuration - Replace with your actual Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5LqCUYEaAX5lR5x25D7nxu63loA-goFc",
+            authDomain: "pocket-investie-412fe.firebaseapp.com",
+            projectId: "pocket-investie-412fe",
+            storageBucket: "pocket-investie-412fe.firebasestorage.app",
+            messagingSenderId: "218119968222",
+            appId: "1:218119968222:web:522cc4142df3a90cb0f94f"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const loginTab = document.getElementById('login-tab');
+        const registerTab = document.getElementById('register-tab');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const switchToRegister = document.getElementById('switch-to-register');
+        const switchToLogin = document.getElementById('switch-to-login');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const loginEmail = document.getElementById('login-email');
+        const loginPassword = document.getElementById('login-password');
+        const registerName = document.getElementById('register-name');
+        const registerEmail = document.getElementById('register-email');
+        const registerPhone = document.getElementById('register-phone');
+        const registerPassword = document.getElementById('register-password');
+        const registerConfirmPassword = document.getElementById('register-confirm-password');
+        const loginTogglePassword = document.getElementById('login-toggle-password');
+        const registerTogglePassword = document.getElementById('register-toggle-password');
+        const loginBtnText = document.getElementById('login-btn-text');
+        const loginSpinner = document.getElementById('login-spinner');
+        const registerBtnText = document.getElementById('register-btn-text');
+        const registerSpinner = document.getElementById('register-spinner');
+        const loginSuccess = document.getElementById('login-success');
+        const registerSuccess = document.getElementById('register-success');
+
+        // Error elements
+        const errorElements = {
+            loginEmail: document.getElementById('login-email-error'),
+            loginPassword: document.getElementById('login-password-error'),
+            registerName: document.getElementById('register-name-error'),
+            registerEmail: document.getElementById('register-email-error'),
+            registerPhone: document.getElementById('register-phone-error'),
+            registerPassword: document.getElementById('register-password-error'),
+            registerConfirmPassword: document.getElementById('register-confirm-password-error')
+        };
+
+        // Switch between login and register forms
+        function showLoginForm() {
+            loginTab.classList.add('active');
+            registerTab.classList.remove('active');
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            clearErrors();
+        }
+
+        function showRegisterForm() {
+            registerTab.classList.add('active');
+            loginTab.classList.remove('active');
+            registerForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+            clearErrors();
+        }
+
+        loginTab.addEventListener('click', showLoginForm);
+        registerTab.addEventListener('click', showRegisterForm);
+        switchToRegister.addEventListener('click', showRegisterForm);
+        switchToLogin.addEventListener('click', showLoginForm);
+
+        // Toggle password visibility
+        function togglePasswordVisibility(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        loginTogglePassword.addEventListener('click', () => {
+            togglePasswordVisibility('login-password', loginTogglePassword);
+        });
+
+        registerTogglePassword.addEventListener('click', () => {
+            togglePasswordVisibility('register-password', registerTogglePassword);
+        });
+
+        // Clear error messages
+        function clearErrors() {
+            for (const key in errorElements) {
+                errorElements[key].style.display = 'none';
+                errorElements[key].textContent = '';
+            }
+            loginSuccess.style.display = 'none';
+            registerSuccess.style.display = 'none';
+        }
+
+        // Validate email format
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // Validate password strength
+        function isStrongPassword(password) {
+            // At least 8 characters, one uppercase, one lowercase, one number
+            const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+            return re.test(password);
+        }
+
+        // Show error message
+        function showError(elementId, message) {
+            errorElements[elementId].textContent = message;
+            errorElements[elementId].style.display = 'block';
+        }
+
+        // Handle login
+        loginBtn.addEventListener('click', async () => {
+            const email = loginEmail.value.trim();
+            const password = loginPassword.value.trim();
+            
+            clearErrors();
+            
+            // Validation
+            let isValid = true;
+            
+            if (!email) {
+                showError('loginEmail', 'Email is required');
+                isValid = false;
+            } else if (!isValidEmail(email)) {
+                showError('loginEmail', 'Please enter a valid email address');
+                isValid = false;
+            }
+            
+            if (!password) {
+                showError('loginPassword', 'Password is required');
+                isValid = false;
+            } else if (password.length < 6) {
+                showError('loginPassword', 'Password must be at least 6 characters');
+                isValid = false;
+            }
+            
+            if (!isValid) return;
+            
+            try {
+                // Show loading state
+                loginBtnText.classList.add('hidden');
+                loginSpinner.classList.remove('hidden');
+                loginBtn.disabled = true;
+                
+                // Sign in with Firebase
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Show success message
+                loginSuccess.style.display = 'block';
+                
+                // Redirect to dashboard after 2 seconds
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
+            } catch (error) {
+                console.error('Login error:', error);
+                let errorMessage = 'Login failed. Please try again.';
+                
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage = 'No user found with this email.';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage = 'Incorrect password. Please try again.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = 'Too many failed attempts. Please try again later.';
+                }
+                
+                showError('loginPassword', errorMessage);
+            } finally {
+                // Reset button state
+                loginBtnText.classList.remove('hidden');
+                loginSpinner.classList.add('hidden');
+                loginBtn.disabled = false;
+            }
+        });
+
+        // Handle registration
+        registerBtn.addEventListener('click', async () => {
+            const name = registerName.value.trim();
+            const email = registerEmail.value.trim();
+            const phone = registerPhone.value.trim();
+            const password = registerPassword.value.trim();
+            const confirmPassword = registerConfirmPassword.value.trim();
+            const terms = document.getElementById('terms').checked;
+            
+            clearErrors();
+            
+            // Validation
+            let isValid = true;
+            
+            if (!name) {
+                showError('registerName', 'Full name is required');
+                isValid = false;
+            }
+            
+            if (!email) {
+                showError('registerEmail', 'Email is required');
+                isValid = false;
+            } else if (!isValidEmail(email)) {
+                showError('registerEmail', 'Please enter a valid email address');
+                isValid = false;
+            }
+            
+            if (!phone) {
+                showError('registerPhone', 'Phone number is required');
+                isValid = false;
+            } else if (!/^\d{10,15}$/.test(phone)) {
+                showError('regi
