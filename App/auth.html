@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket Investie - Authentication</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #2a4d69);
+        }
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+        }
+        .auth-tabs {
+            display: flex;
+            border-bottom: 2px solid #f1f1f1;
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .auth-tab.active {
+            color: #2563eb;
+            border-bottom: 3px solid #2563eb;
+        }
+        .form-container {
+            padding: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+        }
+        .form-input {
+            padding-left: 45px;
+            height: 50px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            width: 100%;
+            transition: border-color 0.3s;
+        }
+        .form-input:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .auth-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        .auth-btn:hover {
+            background: #1d4ed8;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #6b7280;
+            margin: 20px 0;
+        }
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .divider::before {
+            margin-right: 10px;
+        }
+        .divider::after {
+            margin-left: 10px;
+        }
+        .social-login {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .social-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .social-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .google-btn {
+            background: #4285F4;
+            color: white;
+        }
+        .facebook-btn {
+            background: #4267B2;
+            color: white;
+        }
+        .twitter-btn {
+            background: #1DA1F2;
+            color: white;
+        }
+        .error-message {
+            color: #ef4444;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <div class="auth-container flex items-center justify-center p-4">
+        <div class="auth-card">
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="login-tab">Login</div>
+                <div class="auth-tab" id="register-tab">Register</div>
+            </div>
+            
+            <!-- Login Form -->
+            <div class="form-container" id="login-form">
+                <h2 class="text-2xl font-bold text-center mb-6">Login to Your Account</h2>
+                
+                <div class="input-group">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="login-email" class="form-input" placeholder="Email Address">
+                </div>
+                
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="login-password" class="form-input" placeholder="Password">
+                    <i class="fas fa-eye password-toggle" id="login-toggle-password"></i>
+                </div>
+                
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="remember-me" class="mr-2">
+                        <label for="remember-me" class="text-sm text-gray-600">Remember me</label>
+                    </div>
+                    <a href="#" class="text-sm text-blue-600 hover:underline">Forgot password?</a>
+                </div>
+                
+                <button id="login-btn" class="auth-btn mb-4">Login</button>
+                <div id="login-error" class="error-message"></div>
+                
+                <div class="divider">or continue with</div>
+                
+                <div class="social-login">
+                    <div class="social-btn google-btn">
+                        <i class="fab fa-google"></i>
+                    </div>
+                    <div class="social-btn facebook-btn">
+                        <i class="fab fa-facebook-f"></i>
+                    </div>
+                    <div class="social-btn twitter-btn">
+                        <i class="fab fa-twitter"></i>
+                    </div>
+                </div>
+                
+                <p class="text-center text-gray-600 mt-6">
+                    Don't have an account? <span id="switch-to-register" class="text-blue-600 font-medium cursor-pointer hover:underline">Register</span>
+                </p>
+            </div>
+            
+            <!-- Register Form -->
+            <div class="form-container hidden" id="register-form">
+                <h2 class="text-2xl font-bold text-center mb-6">Create an Account</h2>
+                
+                <div class="input-group">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="register-name" class="form-input" placeholder="Full Name">
+                </div>
+                
+                <div class="input-group">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="register-email" class="form-input" placeholder="Email Address">
+                </div>
+                
+                <div class="input-group">
+                    <i class="fas fa-phone input-icon"></i>
+                    <input type="tel" id="register-phone" class="form-input" placeholder="Phone Number">
+                </div>
+                
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="register-password" class="form-input" placeholder="Password">
+                    <i class="fas fa-eye password-toggle" id="register-toggle-password"></i>
+                </div>
+                
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="register-confirm-password" class="form-input" placeholder="Confirm Password">
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="terms" class="mr-2">
+                        <label for="terms" class="text-sm text-gray-600">
+                            I agree to the <a href="#" class="text-blue-600 hover:underline">Terms & Conditions</a> and <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>
+                        </label>
+                    </div>
+                </div>
+                
+                <button id="register-btn" class="auth-btn mb-4">Create Account</button>
+                <div id="register-error" class="error-message"></div>
+                
+                <div class="divider">or continue with</div>
+                
+                <div class="social-login">
+                    <div class="social-btn google-btn">
+                        <i class="fab fa-google"></i>
+                    </div>
+                    <div class="social-btn facebook-btn">
+                        <i class="fab fa-facebook-f"></i>
+                    </div>
+                    <div class="social-btn twitter-btn">
+                        <i class="fab fa-twitter"></i>
+                    </div>
+                </div>
+                
+                <p class="text-center text-gray-600 mt-6">
+                    Already have an account? <span id="switch-to-login" class="text-blue-600 font-medium cursor-pointer hover:underline">Login</span>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Firebase configuration - Replace with your actual Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEXAMPLEEXAMPLEEXAMPLEEXAMPLE",
+            authDomain: "your-project-id.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project-id.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abc123def456abc789def"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const loginTab = document.getElementById('login-tab');
+        const registerTab = document.getElementById('register-tab');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const switchToRegister = document.getElementById('switch-to-register');
+        const switchToLogin = document.getElementById('switch-to-login');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const loginEmail = document.getElementById('login-email');
+        const loginPassword = document.getElementById('login-password');
+        const registerName = document.getElementById('register-name');
+        const registerEmail = document.getElementById('register-email');
+        const registerPhone = document.getElementById('register-phone');
+        const registerPassword = document.getElementById('register-password');
+        const registerConfirmPassword = document.getElementById('register-confirm-password');
+        const loginError = document.getElementById('login-error');
+        const registerError = document.getElementById('register-error');
+        const loginTogglePassword = document.getElementById('login-toggle-password');
+        const registerTogglePassword = document.getElementById('register-toggle-password');
+
+        // Switch between login and register forms
+        function showLoginForm() {
+            loginTab.classList.add('active');
+            registerTab.classList.remove('active');
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            clearErrors();
+        }
+
+        function showRegisterForm() {
+            registerTab.classList.add('active');
+            loginTab.classList.remove('active');
+            registerForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+            clearErrors();
+        }
+
+        loginTab.addEventListener('click', showLoginForm);
+        registerTab.addEventListener('click', showRegisterForm);
+        switchToRegister.addEventListener('click', showRegisterForm);
+        switchToLogin.addEventListener('click', showLoginForm);
+
+        // Toggle password visibility
+        function togglePasswordVisibility(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        loginTogglePassword.addEventListener('click', () => {
+            togglePasswordVisibility('login-password', loginTogglePassword);
+        });
+
+        registerTogglePassword.addEventListener('click', () => {
+            togglePasswordVisibility('register-password', registerTogglePassword);
+        });
+
+        // Clear error messages
+        function clearErrors() {
+            loginError.style.display = 'none';
+            registerError.style.display = 'none';
+        }
+
+        // Validate email format
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // Validate password strength
+        function isStrongPassword(password) {
+            // At least 8 characters, one uppercase, one lowercase, one number
+            const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+            return re.test(password);
+        }
+
+        // Handle login
+        loginBtn.addEventListener('click', async () => {
+            const email = loginEmail.value.trim();
+            const password = loginPassword.value.trim();
+            
+            clearErrors();
+            
+            if (!email || !password) {
+                loginError.textContent = 'Please fill in all fields';
+                loginError.style.display = 'block';
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                loginError.textContent = 'Please enter a valid email address';
+                loginError.style.display = 'block';
+                return;
+            }
+            
+            try {
+                // Show loading state
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Logging in...';
+                
+                // Sign in with Firebase
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Redirect to dashboard
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                console.error('Login error:', error);
+                let errorMessage = 'Login failed. Please try again.';
+                
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage = 'No user found with this email.';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage = 'Incorrect password. Please try again.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = 'Too many failed attempts. Please try again later.';
+                }
+                
+                loginError.textContent = errorMessage;
+                loginError.style.display = 'block';
+            } finally {
+                // Reset button state
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        });
+
+        // Handle registration
+        registerBtn.addEventListener('click', async () => {
+            const name = registerName.value.trim();
+            const email = registerEmail.value.trim();
+            const phone = registerPhone.value.trim();
+            const password = registerPassword.value.trim();
+            const confirmPassword = registerConfirmPassword.value.trim();
+            const terms = document.getElementById('terms').checked;
+            
+            clearErrors();
+            
+            if (!name || !email || !phone || !password || !confirmPassword) {
+                registerError.textContent = 'Please fill in all fields';
+                registerError.style.display = 'block';
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                registerError.textContent = 'Please enter a valid email address';
+                registerError.style.display = 'block';
+                return;
+            }
+            
+            if (!isStrongPassword(password)) {
+                registerError.textContent = 'Password must be at least 8 characters with uppercase, lowercase, and a number';
+                registerError.style.display = 'block';
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                registerError.textContent = 'Passwords do not match';
+                registerError.style.display = 'block';
+                return;
+            }
+            
+            if (!terms) {
+                registerError.textContent = 'You must agree to the terms and conditions';
+                registerError.style.display = 'block';
+                return;
+            }
+            
+            try {
+                // Show loading state
+                registerBtn.disabled = true;
+                registerBtn.textContent = 'Creating account...';
+                
+                // Create user with Firebase
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Save additional user data to Firestore
+                await db.collection('users').doc(user.uid).set({
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    investmentBalance: 0,
+                    totalEarnings: 0
+                });
+                
+                // Redirect to dashboard
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                console.error('Registration error:', error);
+                let errorMessage = 'Registration failed. Please try again.';
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = 'Email is already in use.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = 'Password is too weak.';
+                }
+                
+                registerError.textContent = errorMessage;
+                registerError.style.display = 'block';
+            } finally {
+                // Reset button state
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Create Account';
+            }
+        });
+
+        // Social login handlers (placeholder implementation)
+        document.querySelectorAll('.social-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                alert('Social login functionality would be implemented here');
+            });
+        });
+
+        // Demo login for testing purposes
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'd') {
+                loginEmail.value = '@pocketinvestie.com';
+                loginPassword.value = 'Ch1k@ms__00';
+                alert(d. Click Login to continue.');
+            }
+        });
+    </script>
+</body>
+</html>
