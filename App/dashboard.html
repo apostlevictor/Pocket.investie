@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket Investie - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --primary: #1a2a6c;
+            --secondary: #b21f1f;
+            --accent: #2a4d69;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border-top: 3px solid var(--primary);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+        
+        .action-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .action-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+        }
+        
+        .transaction-row {
+            transition: all 0.2s;
+        }
+        
+        .transaction-row:hover {
+            background-color: #f8fafc;
+        }
+        
+        .investment-card {
+            border-left: 3px solid var(--primary);
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-outline {
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <!-- Firebase Configuration -->
+    <script>
+        // Replace with your Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
+            authDomain: "pocket-investie.firebaseapp.com",
+            projectId: "pocket-investie",
+            storageBucket: "pocket-investie.firebasestorage.app",
+            messagingSenderId: "246875262393",
+            appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+    </script>
+    
+    <!-- Dashboard Header -->
+    <header class="dashboard-header text-white">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-chart-line text-2xl mr-3"></i>
+                <h1 class="text-xl font-bold">Pocket Investie</h1>
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10"></div>
+                    <div class="hidden md:block">
+                        <p class="font-semibold" id="header-name">Loading...</p>
+                        <p class="text-xs opacity-80" id="header-email">user@email.com</p>
+                    </div>
+                </div>
+                <button id="logout-btn" class="text-white hover:text-blue-200">
+                    <i class="fas fa-sign-out-alt text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Dashboard Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Welcome & Stats -->
+        <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
+                <p class="text-gray-600 mt-1">Welcome back, <span id="welcome-name" class="font-medium">Investor</span></p>
+            </div>
+            <div class="mt-4 md:mt-0 text-sm text-gray-500">
+                <i class="far fa-calendar mr-1"></i>
+                <span id="current-date">August 6, 2025</span>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card p-5">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Account Balance</p>
+                        <h3 class="text-2xl font-bold mt-1" id="balance-amount">₦ 0.00</h3>
+                    </div>
+                    <div class="bg-blue-100 p-2 rounded-lg">
+                        <i class="fas fa-wallet text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-gray-100">
+                    <p class="text-xs text-gray-500">Last deposit: <span id="last-deposit">--</span></p>
+                </div>
+            </div>
+            
+            <div class="card p-5">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Total Earnings</p>
+                        <h3 class="text-2xl font-bold mt-1" id="earnings-amount">₦ 0.00</h3>
+                    </div>
+                    <div class="bg-green-100 p-2 rounded-lg">
+                        <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-gray-100">
+                    <p class="text-xs text-gray-500">ROI: <span id="roi-percent">0%</span></p>
+                </div>
+            </div>
+            
+            <div class="card p-5">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Active Investments</p>
+                        <h3 class="text-2xl font-bold mt-1" id="active-investments">0</h3>
+                    </div>
+                    <div class="bg-purple-100 p-2 rounded-lg">
+                        <i class="fas fa-chart-pie text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-gray-100">
+                    <p class="text-xs text-gray-500">Total: <span id="invested-amount">₦ 0.00</span></p>
+                </div>
+            </div>
+            
+            <div class="card p-5">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Referral Earnings</p>
+                        <h3 class="text-2xl font-bold mt-1" id="referral-earnings">₦ 0.00</h3>
+                    </div>
+                    <div class="bg-yellow-100 p-2 rounded-lg">
+                        <i class="fas fa-users text-yellow-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-gray-100">
+                    <p class="text-xs text-gray-500">Referrals: <span id="referral-count">0</span></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            <a href="deposit.html" class="action-card bg-white rounded-lg p-4 flex flex-col items-center text-center">
+                <div class="bg-blue-100 p-3 rounded-full mb-3">
+                    <i class="fas fa-wallet text-blue-600 text-xl"></i>
+                </div>
+                <h3 class="font-medium">Deposit</h3>
+            </a>
+            
+            <a href="withdraw.html" class="action-card bg-white rounded-lg p-4 flex flex-col items-center text-center">
+                <div class="bg-green-100 p-3 rounded-full mb-3">
+                    <i class="fas fa-money-bill-wave text-green-600 text-xl"></i>
+                </div>
+                <h3 class="font-medium">Withdraw</h3>
+            </a>
+            
+            <a href="invest.html" class="action-card bg-white rounded-lg p-4 flex flex-col items-center text-center">
+                <div class="bg-purple-100 p-3 rounded-full mb-3">
+                    <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                </div>
+                <h3 class="font-medium">Invest</h3>
+            </a>
+            
+            <a href="profile.html" class="action-card bg-white rounded-lg p-4 flex flex-col items-center text-center">
+                <div class="bg-amber-100 p-3 rounded-full mb-3">
+                    <i class="fas fa-user text-amber-600 text-xl"></i>
+                </div>
+                <h3 class="font-medium">Profile</h3>
+            </a>
+        </div>
+        
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Transaction History -->
+            <div class="lg:col-span-2">
+                <div class="card p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-800">Transaction History</h3>
+                        <a href="transactions.html" class="text-blue-600 hover:underline text-sm">View All</a>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100" id="transactions-container">
+                                <tr class="transaction-row">
+                                    <td class="py-4 px-4 text-sm">Aug 5, 2025</td>
+                                    <td class="py-4 px-4">
+                                        <div class="font-medium">Bronze Investment</div>
+                                        <div class="text-gray-500 text-xs">Investment</div>
+                                    </td>
+                                    <td class="py-4 px-4 text-red-600 font-medium">-₦15,000</td>
+                                    <td class="py-4 px-4">
+                                        <span class="status-badge bg-green-100 text-green-800">Completed</span>
+                                    </td>
+                                </tr>
+                                <tr class="transaction-row">
+                                    <td class="py-4 px-4 text-sm">Aug 4, 2025</td>
+                                    <td class="py-4 px-4">
+                                        <div class="font-medium">Silver ROI</div>
+                                        <div class="text-gray-500 text-xs">Earnings</div>
+                                    </td>
+                                    <td class="py-4 px-4 text-green-600 font-medium">+₦350,000</td>
+                                    <td class="py-4 px-4">
+                                        <span class="status-badge bg-green-100 text-green-800">Completed</span>
+                                    </td>
+                                </tr>
+                                <tr class="transaction-row">
+                                    <td class="py-4 px-4 text-sm">Aug 2, 2025</td>
+                                    <td class="py-4 px-4">
+                                        <div class="font-medium">Bank Deposit</div>
+                                        <div class="text-gray-500 text-xs">Deposit</div>
+                                    </td>
+                                    <td class="py-4 px-4 text-green-600 font-medium">+₦100,000</td>
+                                    <td class="py-4 px-4">
+                                        <span class="status-badge bg-yellow-100 text-yellow-800">Pending</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-center">
+                        <a href="transactions.html" class="btn-outline px-6 py-2 rounded-lg font-medium">View Full History</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div class="space-y-6">
+                <!-- Running Investments -->
+                <div class="card p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-800">Running Investments</h3>
+                        <a href="invest.html" class="text-blue-600 hover:underline text-sm">View All</a>
+                    </div>
+                    
+                    <div class="space-y-4" id="investments-container">
+                        <div class="investment-card bg-white p-4 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-bold text-gray-800">Bronze Plan</h4>
+                                    <p class="text-sm text-gray-500">50% ROI - 5-7 Days</p>
+                                </div>
+                                <span class="status-badge bg-blue-100 text-blue-800">Active</span>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Amount: ₦15,000</span>
+                                    <span>Earned: ₦7,500</span>
+                                </div>
+                                <div class="progress-bar bg-gray-200 mt-2">
+                                    <div class="progress-fill w-3/4"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-500 mt-2">
+                                    <span>Start: 05 Aug</span>
+                                    <span>End: 12 Aug</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="investment-card bg-white p-4 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-bold text-gray-800">Silver Plan</h4>
+                                    <p class="text-sm text-gray-500">70% ROI - 7 Days</p>
+                                </div>
+                                <span class="status-badge bg-green-100 text-green-800">Completed</span>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Amount: ₦500,000</span>
+                                    <span>Earned: ₦350,000</span>
+                                </div>
+                                <div class="progress-bar bg-gray-200 mt-2">
+                                    <div class="progress-fill w-full"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-500 mt-2">
+                                    <span>Start: 28 Jul</span>
+                                    <span>End: 04 Aug</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <a href="invest.html" class="btn-primary text-white px-6 py-3 rounded-lg w-full block text-center">
+                            Start New Investment
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Support & Referral -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-6">Support & Referral</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-headset text-blue-600 mr-2"></i>
+                                <h4 class="font-medium">24/7 Support</h4>
+                            </div>
+                            <p class="text-sm text-gray-600">We're here to help you anytime</p>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-envelope text-gray-500 mr-3 w-5"></i>
+                                <span>support@pocketinvestie.com</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-phone text-gray-500 mr-3 w-5"></i>
+                                <span>+234 706 279 1952</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fab fa-whatsapp text-gray-500 mr-3 w-5"></i>
+                                <span>+234 706 279 1952</span>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-gray-100">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-medium">Referral Code:</span>
+                                <span class="bg-gray-100 px-3 py-1 rounded font-mono" id="referral-code"></span>
+                            </div>
+                            <button class="btn-outline w-full mt-3 py-2 rounded-lg">
+                             <i class="fas fa-share-alt mr-2"></i> Share Referral
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // Set current date
+        const now = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+        
+        // Firebase user handling
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                // User not logged in, redirect to auth page
+                window.location.href = 'auth.html';
+            } else {
+                // User is logged in
+                document.getElementById('header-name').textContent = user.displayName || 'User Name';
+                document.getElementById('header-email').textContent = user.email;
+                document.getElementById('welcome-name').textContent = user.displayName || 'Investor';
+                
+                // Get additional user data from Firestore
+                db.collection('users').doc(user.uid).get().then(doc => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        
+                        // Update dashboard with user data
+                        document.getElementById('balance-amount').textContent = `₦${formatNumber(userData.balance || 0)}`;
+                        document.getElementById('earnings-amount').textContent = `₦${formatNumber(userData.earnings || 0)}`;
+                        document.getElementById('roi-percent').textContent = `${userData.roi || 0}%`;
+                        document.getElementById('active-investments').textContent = userData.activeInvestments || 0;
+                        document.getElementById('invested-amount').textContent = `₦${formatNumber(userData.invested || 0)}`;
+                        document.getElementById('referral-earnings').textContent = `₦${formatNumber(userData.referralEarnings || 0)}`;
+                        document.getElementById('referral-count').textContent = userData.referrals || 0;
+                        document.getElementById('last-deposit').textContent = userData.lastDeposit ? `₦${formatNumber(userData.lastDeposit)}` : '--';
+                        document.getElementById('referral-code').textContent = userData.referralCode || 'PI-000000';
+                        
+                        // Update transactions
+                        updateTransactions(userData.transactions);
+                        
+                        // Update investments
+                        updateInvestments(userData.investments);
+                    }
+                }).catch(error => {
+                    console.error('Error getting user data:', error);
+                });
+            }
+        });
+        
+        // Format numbers with commas
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+        
+        // Update transactions list
+        function updateTransactions(transactions) {
+            const container = document.getElementById('transactions-container');
+            if (!transactions || transactions.length === 0) {
+                container.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="py-8 text-center text-gray-500">
+                            <i class="far fa-file-alt text-3xl mb-2"></i>
+                            <p>No transactions found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            transactions.slice(0, 3).forEach(transaction => {
+                const amountClass = transaction.type === 'deposit' || transaction.type === 'earning' ? 
+                    'text-green-600' : 'text-red-600';
+                const amountSign = transaction.type === 'deposit' || transaction.type === 'earning' ? 
+                    '+' : '-';
+                
+                let statusClass = 'bg-gray-100 text-gray-800';
+                if (transaction.status === 'completed') statusClass = 'bg-green-100 text-green-800';
+                if (transaction.status === 'pending') statusClass = 'bg-yellow-100 text-yellow-800';
+                if (transaction.status === 'failed') statusClass = 'bg-red-100 text-red-800';
+                
+                html += `
+                    <tr class="transaction-row">
+                        <td class="py-4 px-4 text-sm">${transaction.date}</td>
+                        <td class="py-4 px-4">
+                            <div class="font-medium">${transaction.description}</div>
+                            <div class="text-gray-500 text-xs">${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}</div>
+                        </td>
+                        <td class="py-4 px-4 ${amountClass} font-medium">${amountSign}₦${formatNumber(transaction.amount)}</td>
+                        <td class="py-4 px-4">
+                            <span class="status-badge ${statusClass}">${transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Update investments list
+        function updateInvestments(investments) {
+            const container = document.getElementById('investments-container');
+            if (!investments || investments.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 text-gray-500">
+                        <i class="fas fa-chart-pie text-3xl mb-2"></i>
+                        <p>No active investments</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            investments.filter(inv => inv.status === 'active' || inv.status === 'completed').slice(0, 2).forEach(investment => {
+                const progress = Math.min(Math.max(0, investment.progress), 100);
+                
+                let statusClass = 'bg-gray-100 text-gray-800';
+                if (investment.status === 'active') statusClass = 'bg-blue-100 text-blue-800';
+                if (investment.status === 'completed') statusClass = 'bg-green-100 text-green-800';
+                if (investment.status === 'pending') statusClass = 'bg-yellow-100 text-yellow-800';
+                
+                html += `
+                    <div class="investment-card bg-white p-4 rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="font-bold text-gray-800">${investment.plan}</h4>
+                                <p class="text-sm text-gray-500">${investment.roi}% ROI - ${investment.duration}</p>
+                            </div>
+                            <span class="status-badge ${statusClass}">${investment.status.charAt(0).toUpperCase() + investment.status.slice(1)}</span>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>Amount: ₦${formatNumber(investment.amount)}</span>
+                                <span>Earned: ₦${formatNumber(investment.earned || 0)}</span>
+                            </div>
+                            <div class="progress-bar bg-gray-200 mt-2">
+                                <div class="progress-fill" style="width: ${progress}%"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-500 mt-2">
+                                <span>Start: ${investment.startDate}</span>
+                                <span>End: ${investment.endDate}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', e => {
+            e.preventDefault();
+            auth.signOut().then(() => {
+                window.location.href = 'auth.html';
+            });
+        });
+    </script>
+</body>
+</html>
