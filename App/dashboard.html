@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Pocket Investie</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <div class="min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <header class="bg-blue-600 text-white p-4 flex justify-between items-center shadow-md">
+      <h1 class="text-xl font-bold">Pocket Investie</h1>
+      <button id="logout-btn" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-gray-100 font-semibold">
+        Logout
+      </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6">
+      <h2 class="text-2xl font-bold mb-6">Welcome, <span id="user-name">User</span> 👋</h2>
+
+      <!-- Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white p-5 rounded-lg shadow">
+          <p class="text-gray-600">Investment Balance</p>
+          <p id="investment-balance" class="text-2xl font-bold text-green-600">₦0.00</p>
+        </div>
+        <div class="bg-white p-5 rounded-lg shadow">
+          <p class="text-gray-600">Total Earnings</p>
+          <p id="total-earnings" class="text-2xl font-bold text-blue-600">₦0.00</p>
+        </div>
+        <div class="bg-white p-5 rounded-lg shadow">
+          <p class="text-gray-600">Phone</p>
+          <p id="user-phone" class="text-xl text-gray-800">N/A</p>
+        </div>
+      </div>
+
+      <!-- Transactions Table -->
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold mb-4">Recent Transactions</h3>
+        <table class="w-full text-left table-auto">
+          <thead>
+            <tr>
+              <th class="pb-2 border-b">Date</th>
+              <th class="pb-2 border-b">Type</th>
+              <th class="pb-2 border-b">Amount</th>
+              <th class="pb-2 border-b">Status</th>
+            </tr>
+          </thead>
+          <tbody id="transaction-list">
+            <tr>
+              <td colspan="4" class="text-center py-4 text-gray-500">No transactions yet</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA5LqCUYEaAX5lR5x25D7nxu63loA-goFc",
+      authDomain: "pocket-investie-412fe.firebaseapp.com",
+      projectId: "pocket-investie-412fe",
+      storageBucket: "pocket-investie-412fe.firebasestorage.app",
+      messagingSenderId: "218119968222",
+      appId: "1:218119968222:web:522cc4142df3a90cb0f94f"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const logoutBtn = document.getElementById('logout-btn');
+    const userName = document.getElementById('user-name');
+    const userPhone = document.getElementById('user-phone');
+    const investmentBalance = document.getElementById('investment-balance');
+    const totalEarnings = document.getElementById('total-earnings');
+    const transactionList = document.getElementById('transaction-list');
+
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const uid = user.uid;
+        try {
+          const userDoc = await db.collection('users').doc(uid).get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            userName.textContent = userData.name || 'User';
+            userPhone.textContent = userData.phone || 'N/A';
+            investmentBalance.textContent = `₦${(userData.investmentBalance || 0).toLocaleString()}`;
+            totalEarnings.textContent = `₦${(userData.totalEarnings || 0).toLocaleString()}`;
+          }
+
+          // Load dummy transactions (replace with real Firestore collection later)
+          const transactions = [
+            { date: '2025-08-01', type: 'Deposit', amount: 5000, status: 'Completed' },
+            { date: '2025-08-03', type: 'Withdrawal', amount: 2000, status: 'Pending' },
+          ];
+
+          transactionList.innerHTML = '';
+          transactions.forEach(tx => {
+            transactionList.innerHTML += `
+              <tr class="border-b text-sm">
+                <td class="py-2">${tx.date}</td>
+                <td>${tx.type}</td>
+                <td>₦${tx.amount.toLocaleString()}</td>
+                <td class="text-green-600">${tx.status}</td>
+              </tr>`;
+          });
+
+        } catch (error) {
+          console.error("Error loading user data:", error);
+        }
+      } else {
+        // Not logged in, redirect to login
+        window.location.href = "index.html";
+      }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      auth.signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    });
+  </script>
+</body>
+</html>
