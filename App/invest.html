@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invest Funds - Pocket Investie</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #1a2a6c, #2a4d69);
+        }
+        .investment-card {
+            transition: all 0.3s ease;
+            border-top: 4px solid;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        .investment-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+        }
+        .bronze {
+            border-color: #cd7f32;
+        }
+        .silver {
+            border-color: #c0c0c0;
+        }
+        .gold {
+            border-color: #ffd700;
+        }
+        .platinum {
+            border-color: #e5e4e2;
+        }
+        .plan-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .bronze-badge {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .silver-badge {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .gold-badge {
+            background-color: #fef9c3;
+            color: #854d0e;
+        }
+        .platinum-badge {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        .investment-modal {
+            animation: modalAppear 0.4s ease-out;
+        }
+        @keyframes modalAppear {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-bar {
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #10b981;
+            width: 0%;
+            transition: width 0.8s ease;
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-chart-line text-blue-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-900">Pocket Investie</span>
+                    </div>
+                </div>
+                <div class="hidden md:ml-6 md:flex md:items-center space-x-8">
+                    <a href="dashboard.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Dashboard</a>
+                    <a href="invest.html" class="text-blue-600 font-semibold px-3 py-2 text-sm font-medium">Invest</a>
+                    <a href="transactions.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Transactions</a>
+                    <a href="profile.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Profile</a>
+                    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="md:w-1/2 mb-10 md:mb-0">
+                    <h1 class="text-4xl md:text-5xl font-bold leading-tight mb-4">Grow Your Wealth</h1>
+                    <p class="text-xl mb-8">Invest in our high-return plans and watch your money multiply with Pocket Investie's expert trading strategies.</p>
+                    <div class="flex items-center">
+                        <div class="flex items-center mr-8">
+                            <i class="fas fa-shield-alt text-xl mr-2"></i>
+                            <span>Secure Investments</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-chart-line text-xl mr-2"></i>
+                            <span>Guaranteed Returns</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:w-1/2 flex justify-center">
+                    <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-6 max-w-md">
+                        <h3 class="text-xl font-bold mb-4">Your Investment Power</h3>
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <p class="text-blue-200">Available Balance</p>
+                                <h2 class="text-3xl font-bold mt-1" id="heroBalance">₦0.00</h2>
+                            </div>
+                            <a href="deposit.html" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                Add Funds
+                            </a>
+                        </div>
+                        <div class="bg-black bg-opacity-30 rounded-xl p-4">
+                            <p class="text-sm mb-2">Next investment cycle starts in:</p>
+                            <div class="flex space-x-4">
+                                <div class="text-center">
+                                    <div class="bg-blue-900 rounded-lg py-2 px-3 text-xl font-bold">12</div>
+                                    <p class="text-xs mt-1">Hours</p>
+                                </div>
+                                <div class="text-center">
+                                    <div class="bg-blue-900 rounded-lg py-2 px-3 text-xl font-bold">45</div>
+                                    <p class="text-xs mt-1">Minutes</p>
+                                </div>
+                                <div class="text-center">
+                                    <div class="bg-blue-900 rounded-lg py-2 px-3 text-xl font-bold">22</div>
+                                    <p class="text-xs mt-1">Seconds</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Investment Plans -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Investment Plans</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Choose from our carefully crafted investment plans designed to maximize your returns. All profits are paid directly to your wallet.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Bronze Plan -->
+                <div class="investment-card bronze bg-white rounded-xl">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="plan-badge bronze-badge">BRONZE</span>
+                                <h3 class="text-2xl font-bold mt-2">50% ROI</h3>
+                            </div>
+                            <div class="bg-amber-100 p-3 rounded-full">
+                                <i class="fas fa-medal text-amber-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 mb-6">5-7 Days Duration</p>
+                        <div class="mb-6">
+                            <p class="text-gray-700 font-medium mb-1">Investment Range</p>
+                            <p class="text-2xl font-bold">₦15,000 <span class="text-gray-500 text-base">- ₦500,000</span></p>
+                        </div>
+                        <ul class="mb-8 space-y-3">
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span>50% Return on Investment</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span>5-7 Days Duration</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span>Priority Support</span>
+                            </li>
+                        </ul>
+                        <button data-plan="bronze" class="invest-btn w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-3 rounded-lg transition duration-300">
+                            Invest in Bronze
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Silver Plan -->
+                <div class="investment-card silver bg-white rounded-xl">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="plan-badge silver-badge">SILVER</span>
+                                <h3 class="text-2xl font-bold mt-2">70% ROI</h3>
+                            </div>
+                            <div class="bg-gray-200 p-3 rounded-full">
+                                <i class="fas fa-medal text-gray-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 mb-6">7 Days Duration</p>
+                        <div class="mb-6">
+                            <p class="text-gray-700 font-medium mb-1">Investment Range</p>
+                            <p class="text-2xl font-bold">₦500,000 <span class="text-gray-500 text-base">- ₦2,000,000</span></p>
+                        </div>
+                        <ul class="mb-8 space-y-3">
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span>70% Return on Investment</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span>7 Days Duration</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span>Dedicated Account Manager</span>
+                            </li>
+                        </ul>
+                        <button data-plan="silver" class="invest-btn w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 rounded-lg transition duration-300">
+                            Invest in Silver
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Gold Plan -->
+                <div class="investment-card gold bg-white rounded-xl">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="plan-badge gold-badge">GOLD</span>
+                                <h3 class="text-2xl font-bold mt-2">85% ROI</h3>
+                            </div>
+                            <div class="bg-yellow-100 p-3 rounded-full">
+                                <i class="fas fa-medal text-yellow-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 mb-6">7 Days Duration</p>
+                        <div class="mb-6">
+                            <p class="text-gray-700 font-medium mb-1">Investment Range</p>
+                            <p class="text-2xl font-bold">₦2,000,000 <span class="text-gray-500 text-base">- ₦5,000,000</span></p>
+                        </div>
+                        <ul class="mb-8 space-y-3">
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span>85% Return on Investment</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span>7 Days Duration</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span>VIP Support & Guidance</span>
+                            </li>
+                        </ul>
+                        <button data-plan="gold" class="invest-btn w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-3 rounded-lg transition duration-300">
+                            Invest in Gold
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Platinum Plan -->
+                <div class="investment-card platinum bg-white rounded-xl">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="plan-badge platinum-badge">PLATINUM</span>
+                                <h3 class="text-2xl font-bold mt-2">120% ROI</h3>
+                            </div>
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <i class="fas fa-medal text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 mb-6">10 Days Duration</p>
+                        <div class="mb-6">
+                            <p class="text-gray-700 font-medium mb-1">Investment Range</p>
+                            <p class="text-2xl font-bold">₦5,000,000 <span class="text-gray-500 text-base">- ₦10,000,000</span></p>
+                        </div>
+                        <ul class="mb-8 space-y-3">
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span>120% Return on Investment</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span>10 Days Duration</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-check text-green-600 text-xs"></i>
+                                </div>
+                                <span>Executive Account Manager</span>
+                            </li>
+                        </ul>
+                        <button data-plan="platinum" class="invest-btn w-full bg-blue-800 hover:bg-blue-900 text-white font-medium py-3 rounded-lg transition duration-300">
+                            Invest in Platinum
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Investment Process -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">How Investing Works</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Our transparent investment process ensures you know exactly how your money is working for you.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-xl p-6 text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-wallet text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Fund Your Wallet</h3>
+                    <p class="text-gray-600">Deposit funds into your secure Pocket Investie wallet using our multiple payment options.</p>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-chart-line text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Choose Your Plan</h3>
+                    <p class="text-gray-600">Select an investment plan that matches your financial goals and risk tolerance.</p>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 text-center">
+                   <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-money-bill-wave text-amber-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Receive Profits</h3>
+                    <p class="text-gray-600">Get your capital plus returns deposited directly to your wallet at the end of the investment period.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Investment Modal -->
+    <div id="investmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="investment-modal bg-white rounded-2xl p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold" id="modalPlanName">Invest in Bronze</h3>
+                <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="block text-sm font-medium text-gray-700">Investment Amount (₦)</label>
+                    <span class="text-xs text-gray-500">Min: <span id="minAmount">₦15,000</span></span>
+                </div>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span class="text-gray-500">₦</span>
+                    </div>
+                    <input type="number" id="investAmount" class="block w-full pl-8 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Enter amount" min="15000">
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Max: <span id="maxAmount">₦500,000</span></p>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-sm font-medium text-gray-700 mb-3">Expected Returns</p>
+                <div class="bg-gray-50 rounded-xl p-4">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">Investment Amount:</span>
+                        <span class="font-medium" id="displayAmount">₦0.00</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">Return on Investment:</span>
+                        <span class="font-medium" id="roiPercentage">50%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Expected Profit:</span>
+                        <span class="font-medium text-green-600" id="expectedProfit">₦0.00</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-sm font-medium text-gray-700 mb-3">Wallet Balance</p>
+                <div class="flex justify-between items-center">
+                    <span class="text-lg font-bold" id="modalWalletBalance">₦0.00</span>
+                    <span class="text-xs px-2 py-1 rounded-full" id="balanceStatus"></span>
+                </div>
+            </div>
+            
+            <button id="confirmInvest" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-300">
+                Confirm Investment
+            </button>
+        </div>
+    </div>
+
+    <!-- Investment Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="investment-modal bg-white rounded-2xl p-8 w-full max-w-md text-center">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-check-circle text-green-600 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Investment Successful!</h3>
+            <p class="text-gray-600 mb-6">Your investment has been processed successfully.</p>
+            
+            <div class="bg-gray-50 rounded-xl p-5 mb-6 text-left">
+                <div class="flex justify-between mb-3">
+                    <span class="text-gray-600">Plan:</span>
+                    <span class="font-medium" id="successPlan">Bronze</span>
+                </div>
+                <div class="flex justify-between mb-3">
+                    <span class="text-gray-600">Amount:</span>
+                    <span class="font-medium" id="successAmount">₦0.00</span>
+                </div>
+                <div class="flex justify-between mb-3">
+                    <span class="text-gray-600">Expected Profit:</span>
+                    <span class="font-medium text-green-600" id="successProfit">₦0.00</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Maturity Date:</span>
+                    <span class="font-medium" id="successDate">DD MMM YYYY</span>
+                </div>
+            </div>
+            
+            <div class="flex space-x-4">
+                <button id="closeSuccess" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-medium transition duration-300">
+                    View Dashboard
+                </button>
+                <button id="newInvestment" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition duration-300">
+                    New Investment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-chart-line text-blue-400 mr-2"></i>
+                        Pocket Investie
+                    </h3>
+                    <p class="text-gray-400 mb-4">"Invest Smart, Grow Your Wealth" - A secure Naira-based investment platform.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-3">
+                        <li><a href="dashboard.html" class="text-gray-400 hover:text-white">Dashboard</a></li>
+                        <li><a href="invest.html" class="text-gray-400 hover:text-white">Investments</a></li>
+                        <li><a href="deposit.html" class="text-gray-400 hover:text-white">Deposit Funds</a></li>
+                        <li><a href="withdraw.html" class="text-gray-400 hover:text-white">Withdraw Funds</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Legal</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Investment Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Risk Disclosure</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Support</h4>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fas fa-envelope text-blue-400 mr-2 mt-1"></i>
+                            <a href="mailto:victorexbinarysignalbot@gmail.com" class="text-gray-400 hover:text-white">victorexbinarysignalbot@gmail.com</a>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-phone text-blue-400 mr-2 mt-1"></i>
+                            <a href="tel:+2347062791952" class="text-gray-400 hover:text-white">+234 706 279 1952</a>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-comments text-blue-400 mr-2 mt-1"></i>
+                            <span class="text-gray-400">Live Chat: 24/7</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-10 pt-6 text-center text-gray-400 text-sm">
+                <p>© 2025 Pocket Investie. Developed and managed by Victorex Binary Option Traders. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
+            authDomain: "pocket-investie.firebaseapp.com",
+            projectId: "pocket-investie",
+            storageBucket: "pocket-investie.firebasestorage.app",
+            messagingSenderId: "246875262393",
+            appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM elements
+        const heroBalance = document.getElementById('heroBalance');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const investBtns = document.querySelectorAll('.invest-btn');
+        const investmentModal = document.getElementById('investmentModal');
+        const closeModal = document.getElementById('closeModal');
+        const investAmount = document.getElementById('investAmount');
+        const modalPlanName = document.getElementById('modalPlanName');
+        const minAmount = document.getElementById('minAmount');
+        const maxAmount = document.getElementById('maxAmount');
+        const displayAmount = document.getElementById('displayAmount');
+        const roiPercentage = document.getElementById('roiPercentage');
+        const expectedProfit = document.getElementById('expectedProfit');
+        const modalWalletBalance = document.getElementById('modalWalletBalance');
+        const balanceStatus = document.getElementById('balanceStatus');
+        const confirmInvest = document.getElementById('confirmInvest');
+        const successModal = document.getElementById('successModal');
+        const closeSuccess = document.getElementById('closeSuccess');
+        const newInvestment = document.getElementById('newInvestment');
+        const successPlan = document.getElementById('successPlan');
+        const successAmount = document.getElementById('successAmount');
+        const successProfit = document.getElementById('successProfit');
+        const successDate = document.getElementById('successDate');
+
+        // Current user and plan data
+        let currentUser = null;
+        let userData = null;
+        let currentPlan = null;
+        const plans = {
+            bronze: { min: 15000, max: 500000, roi: 50, duration: 7 },
+            silver: { min: 500000, max: 2000000, roi: 70, duration: 7 },
+            gold: { min: 2000000, max: 5000000, roi: 85, duration: 7 },
+            platinum: { min: 5000000, max: 10000000, roi: 120, duration: 10 }
+        };
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check auth state
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    loadUserData();
+                } else {
+                    // Redirect to login if not authenticated
+                    window.location.href = 'auth.html';
+                }
+            });
+
+            // Event listeners
+            logoutBtn.addEventListener('click', signOut);
+            
+            // Investment buttons
+            investBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentPlan = btn.dataset.plan;
+                    openInvestmentModal(currentPlan);
+                });
+            });
+            
+            closeModal.addEventListener('click', () => {
+                investmentModal.classList.add('hidden');
+            });
+            
+            investAmount.addEventListener('input', updateProfitCalculation);
+            
+            confirmInvest.addEventListener('click', processInvestment);
+            
+            closeSuccess.addEventListener('click', () => {
+                successModal.classList.add('hidden');
+                window.location.href = 'dashboard.html';
+            });
+            
+            newInvestment.addEventListener('click', () => {
+                successModal.classList.add('hidden');
+            });
+        });
+
+        // Load user data from Firestore
+        function loadUserData() {
+            db.collection("users").doc(currentUser.uid).onSnapshot(doc => {
+                if (doc.exists) {
+                 userData = doc.data();
+                    // Update wallet balance
+                    const balance = userData.walletBalance || 0;
+                    heroBalance.textContent = `₦${balance.toLocaleString()}`;
+                    modalWalletBalance.textContent = `₦${balance.toLocaleString()}`;
+                    
+                    // Update balance status
+                    if (currentPlan) {
+                        updateBalanceStatus();
+                    }
+                } else {
+                    console.log("No user data found");
+                }
+            });
+        }
+
+        // Open investment modal with plan details
+        function openInvestmentModal(plan) {
+            if (!plans[plan]) return;
+            
+            const planData = plans[plan];
+            const planName = plan.charAt(0).toUpperCase() + plan.slice(1);
+            
+            // Set modal content
+            modalPlanName.textContent = `Invest in ${planName}`;
+            minAmount.textContent = `₦${planData.min.toLocaleString()}`;
+            maxAmount.textContent = `₦${planData.max.toLocaleString()}`;
+            investAmount.min = planData.min;
+            investAmount.value = planData.min;
+            roiPercentage.textContent = `${planData.roi}%`;
+            
+            // Update calculations
+            updateProfitCalculation();
+            
+            // Update balance status
+            updateBalanceStatus();
+            
+            // Show modal
+            investmentModal.classList.remove('hidden');
+        }
+
+        // Update profit calculation based on input
+        function updateProfitCalculation() {
+            const amount = parseFloat(investAmount.value) || 0;
+            const roi = plans[currentPlan].roi;
+            const profit = amount * (roi / 100);
+            
+            displayAmount.textContent = `₦${amount.toLocaleString()}`;
+            expectedProfit.textContent = `₦${profit.toLocaleString()}`;
+            
+            updateBalanceStatus();
+        }
+
+        // Update balance status indicator
+        function updateBalanceStatus() {
+            if (!userData || !currentPlan) return;
+            
+            const amount = parseFloat(investAmount.value) || 0;
+            const balance = userData.walletBalance || 0;
+            const planData = plans[currentPlan];
+            
+            if (amount > balance) {
+                balanceStatus.textContent = "Insufficient Balance";
+                balanceStatus.className = "text-xs px-2 py-1 rounded-full bg-red-100 text-red-800";
+                confirmInvest.disabled = true;
+                confirmInvest.classList.add('opacity-50', 'cursor-not-allowed');
+            } else if (amount < planData.min) {
+                balanceStatus.textContent = `Minimum: ₦${planData.min.toLocaleString()}`;
+                balanceStatus.className = "text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800";
+                confirmInvest.disabled = true;
+                confirmInvest.classList.add('opacity-50', 'cursor-not-allowed');
+            } else if (amount > planData.max) {
+                balanceStatus.textContent = `Maximum: ₦${planData.max.toLocaleString()}`;
+                balanceStatus.className = "text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800";
+                confirmInvest.disabled = true;
+                confirmInvest.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                balanceStatus.textContent = "Sufficient Balance";
+                balanceStatus.className = "text-xs px-2 py-1 rounded-full bg-green-100 text-green-800";
+                confirmInvest.disabled = false;
+                confirmInvest.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // Process investment
+        function processInvestment() {
+            const amount = parseFloat(investAmount.value);
+            const plan = currentPlan;
+            const planData = plans[plan];
+            
+            // Validate amount
+            if (!amount || amount < planData.min || amount > planData.max) {
+                alert('Please enter a valid investment amount within the plan limits.');
+                return;
+            }
+            
+            // Validate balance
+            if (!userData || amount > (userData.walletBalance || 0)) {
+                alert('Insufficient balance for this investment. Please deposit more funds.');
+                return;
+            }
+            
+            // Calculate dates
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setDate(startDate.getDate() + planData.duration);
+            
+            // Calculate expected profit
+            const expectedProfit = amount * (planData.roi / 100);
+            
+            // Create investment record
+            const investmentData = {
+                userId: currentUser.uid,
+                plan: plan,
+                amount: amount,
+                roi: planData.roi,
+                expectedProfit: expectedProfit,
+                startDate: firebase.firestore.Timestamp.fromDate(startDate),
+                endDate: firebase.firestore.Timestamp.fromDate(endDate),
+                status: 'active',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            // Create transaction record
+            const transactionData = {
+                userId: currentUser.uid,
+                type: 'investment',
+                amount: amount,
+                description: `Investment in ${plan} plan`,
+                status: 'completed',
+                reference: 'INV-' + Date.now(),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            // Update user wallet
+            const newBalance = (userData.walletBalance || 0) - amount;
+            const totalInvested = (userData.totalInvested || 0) + amount;
+            
+            // Batch write for atomic operations
+            const batch = db.batch();
+            
+            // Add investment
+            const investmentRef = db.collection('investments').doc();
+            batch.set(investmentRef, investmentData);
+            
+            // Add transaction
+            const transactionRef = db.collection('transactions').doc();
+            batch.set(transactionRef, transactionData);
+            
+            // Update user
+            const userRef = db.collection('users').doc(currentUser.uid);
+            batch.update(userRef, {
+                walletBalance: newBalance,
+                totalInvested: totalInvested
+            });
+            
+            // Commit batch
+            batch.commit()
+                .then(() => {
+                    // Show success modal
+                    showSuccessModal(plan, amount, expectedProfit, endDate);
+                })
+                .catch(error => {
+                    console.error("Error processing investment:", error);
+                    alert('An error occurred while processing your investment. Please try again.');
+                });
+        }
+
+        // Show success modal with investment details
+        function showSuccessModal(plan, amount, profit, endDate) {
+            investmentModal.classList.add('hidden');
+            
+            const planName = plan.charAt(0).toUpperCase() + plan.slice(1);
+            const formattedDate = endDate.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            
+            successPlan.textContent = planName;
+            successAmount.textContent = `₦${amount.toLocaleString()}`;
+            successProfit.textContent = `₦${profit.toLocaleString()}`;
+            successDate.textContent = formattedDate;
+            
+            successModal.classList.remove('hidden');
+        }
+
+        // Sign out function
+        function signOut() {
+            auth.signOut().then(() => {
+                window.location.href = 'auth.html';
+            }).catch(error => {
+                console.error("Sign out error:", error);
+            });
+        }
+    </script>
+</body>
+</html>
