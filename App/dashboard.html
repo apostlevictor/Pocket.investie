@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Pocket Investie</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --accent: #10b981;
+            --dark: #0f172a;
+            --light: #f8fafc;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: 70px 1fr;
+            grid-template-areas: 
+                "sidebar header"
+                "sidebar main";
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            grid-area: sidebar;
+            background: var(--dark);
+            color: white;
+            border-right: 1px solid #334155;
+        }
+        
+        .header {
+            grid-area: header;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .main-content {
+            grid-area: main;
+            background: #f1f5f9;
+            padding: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+            transform: translateY(-3px);
+        }
+        
+        .stat-card {
+            border-top: 4px solid;
+        }
+        
+        .balance-card {
+            border-color: var(--primary);
+        }
+        
+        .earning-card {
+            border-color: var(--accent);
+        }
+        
+        .investment-card {
+            border-color: #f59e0b;
+        }
+        
+        .transaction {
+            border-left: 4px solid;
+            padding-left: 1rem;
+        }
+        
+        .deposit {
+            border-color: #10b981;
+        }
+        
+        .withdrawal {
+            border-color: #ef4444;
+        }
+        
+        .investment {
+            border-color: var(--primary);
+        }
+        
+        .profit {
+            border-color: #f59e0b;
+        }
+        
+        .nav-item:hover {
+            background: #1e293b;
+        }
+        
+        .mobile-menu {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                grid-template-areas: 
+                    "header"
+                    "main";
+            }
+            
+            .sidebar {
+                position: fixed;
+                left: -250px;
+                top: 0;
+                height: 100vh;
+                z-index: 100;
+                transition: left 0.3s ease;
+            }
+            
+            .sidebar.active {
+                left: 0;
+            }
+            
+            .mobile-menu {
+                display: block;
+            }
+            
+            .overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 90;
+                display: none;
+            }
+            
+            .overlay.active {
+                display: block;
+            }
+        }
+        
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50">
+    <div class="dashboard-grid">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="p-6 border-b border-gray-700">
+                <div class="flex items-center">
+                    <i class="fas fa-chart-line text-blue-400 text-2xl mr-3"></i>
+                    <h1 class="text-xl font-bold">Pocket Investie</h1>
+                </div>
+            </div>
+            
+            <nav class="p-4">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" class="nav-item flex items-center p-3 rounded-lg bg-blue-900 text-white">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="deposit.html" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:bg-gray-800">
+                            <i class="fas fa-money-bill-wave mr-3"></i>
+                            Deposit Funds
+                        </a>
+                    </li>
+                    <li>
+                        <a href="withdrawal.html" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:bg-gray-800">
+                            <i class="fas fa-wallet mr-3"></i>
+                            Withdraw Funds
+                        </a>
+                    </li>
+                    <li>
+                        <a href="invest.html" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:bg-gray-800">
+                            <i class="fas fa-chart-line mr-3"></i>
+                            Invest
+                        </a>
+                    </li>
+                    <li>
+                        <a href="profile.html" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:bg-gray-800">
+                            <i class="fas fa-user mr-3"></i>
+                            My Profile
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="logoutBtn" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:bg-gray-800">
+                            <i class="fas fa-sign-out-alt mr-3"></i>
+                            Logout
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        
+        <!-- Header -->
+        <header class="header flex items-center justify-between px-6 py-4">
+            <div class="flex items-center">
+                <button class="mobile-menu mr-4 text-gray-700">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <h2 class="text-xl font-semibold">Dashboard</h2>
+            </div>
+            <div class="flex items-center">
+                <div class="mr-4 text-right">
+                    <p class="font-medium" id="userName">Loading...</p>
+                    <p class="text-sm text-gray-600" id="userStatus">Premium Investor</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold" id="userInitials">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="overlay"></div>
+            
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Total Balance Card -->
+                <div class="card stat-card balance-card p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-gray-500 text-sm font-medium">Total Balance</h3>
+                            <p class="text-2xl font-bold mt-2" id="totalBalance">
+                                <span class="skeleton h-7 w-32 block"></span>
+                            </p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i class="fas fa-wallet text-blue-500 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex justify-between text-sm">
+                            <span id="availableBalance">Available: Loading...</span>
+                            <span id="investedAmount">Invested: Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Total Earnings Card -->
+                <div class="card stat-card earning-card p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-gray-500 text-sm font-medium">Total Earnings</h3>
+                            <p class="text-2xl font-bold mt-2" id="totalEarnings">
+                                <span class="skeleton h-7 w-32 block"></span>
+                            </p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <i class="fas fa-chart-line text-green-500 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-sm">
+                            <span id="todayEarnings">Today: Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Active Investments Card -->
+                <div class="card stat-card investment-card p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-gray-500 text-sm font-medium">Active Investments</h3>
+                            <p class="text-2xl font-bold mt-2" id="activeInvestments">
+                                <span class="skeleton h-7 w-10 block"></span>
+                            </p>
+                        </div>
+                        <div class="bg-yellow-100 p-3 rounded-full">
+                            <i class="fas fa-chart-pie text-yellow-500 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-sm">
+                            <span id="investmentValue">Value: Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts and Transactions -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Performance Chart -->
+                <div class="card p-6">
+                    <h3 class="font-bold text-lg mb-4">Portfolio Performance</h3>
+                    <div class="h-64">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Recent Transactions -->
+                <div class="card p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg">Recent Transactions</h3>
+                        <a href="#" class="text-blue-500 text-sm">View All</a>
+                    </div>
+                    <div class="space-y-4" id="transactionsList">
+                        <!-- Transactions will be loaded dynamically -->
+                        <div class="text-center py-8">
+                            <i class="fas fa-spinner fa-spin text-blue-500 text-2xl mb-3"></i>
+                            <p>Loading transactions...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Active Investments -->
+            <div class="card p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-lg">Active Investments</h3>
+                    <a href="invest.html" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300">
+                        New Investment
+                    </a>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROI</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="investmentsTable">
+                            <!-- Investments will be loaded dynamically -->
+                            <tr>
+                                <td colspan="6" class="px-6 py-8 text-center">
+                                    <i class="fas fa-spinner fa-spin text-blue-500 text-2xl mb-3"></i>
+                                    <p>Loading investments...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase Integration -->
+    <script>
+        // Firebase configuration - Replace with your actual config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
+            authDomain: "pocket-investie.firebaseapp.com",
+            projectId: "pocket-investie",
+            storageBucket: "pocket-investie.firebasestorage.app",
+            messagingSenderId: "246875262393",
+            appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        // DOM elements
+        const userNameEl = document.getElementById('userName');
+        const userInitialsEl = document.getElementById('userInitials');
+        const totalBalanceEl = document.getElementById('totalBalance');
+        const totalEarningsEl = document.getElementById('totalEarnings');
+        const activeInvestmentsEl = document.getElementById('activeInvestments');
+        const availableBalanceEl = document.getElementById('availableBalance');
+        const investedAmountEl = document.getElementById('investedAmount');
+        const todayEarningsEl = document.getElementById('todayEarnings');
+        const investmentValueEl = document.getElementById('investmentValue');
+        const transactionsListEl = document.getElementById('transactionsList');
+        const investmentsTableEl = document.getElementById('investmentsTable');
+        
+        // Format currency
+        const formatCurrency = (amount) => {
+            return '₦' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        };
+        
+        // Get initials from name
+        const getInitials = (name) => {
+            if (!name) return '';
+            const names = name.split(' ');
+            let initials = names[0].substring(0, 1).toUpperCase();
+            
+            if (names.length > 1) {
+                initials += names[names.length - 1].substring(0, 1).toUpperCase();
+            }
+            return initials;
+        };
+        
+        // Render transaction item
+        const renderTransaction = (transaction) => {
+            let typeClass = '';
+            let icon = '';
+            let sign = '';
+            
+            switch(transaction.type) {
+                case 'deposit':
+                    typeClass = 'deposit';
+                    icon = 'fa-money-bill-wave';
+                    sign = '+';
+                    break;
+                case 'withdrawal':
+                    typeClass = 'withdrawal';
+                    icon = 'fa-wallet';
+                    sign = '-';
+                    break;
+                case 'investment':
+                    typeClass = 'investment';
+                    icon = 'fa-chart-line';
+                    sign = '-';
+                    break;
+                case 'profit':
+                    typeClass = 'profit';
+                    icon = 'fa-coins';
+                    sign = '+';
+                    break;
+                default:
+                    typeClass = '';
+            }
+            
+            return `
+                <div class="transaction ${typeClass}">
+                    <div class="flex justify-between">
+                        <div>
+                            <p class="font-medium">${transaction.description}</p>
+                            <p class="text-sm text-gray-500">${new Date(transaction.timestamp).toLocaleString()}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium ${sign === '+' ? 'text-green-600' : 'text-red-600'}">${sign}${formatCurrency(transaction.amount)}</p>
+                            <p class="text-sm text-gray-500">${transaction.status}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+        
+        // Render investment row
+        const renderInvestment = (investment) => {
+            let planClass = '';
+            switch(investment.plan) {
+                case 'Bronze':
+                    planClass = 'bg-amber-100 text-amber-800';
+                    break;
+                case 'Silver':
+                    planClass = 'bg-gray-200 text-gray-800';
+                    break;
+                case 'Gold':
+                    planClass = 'bg-yellow-100 text-yellow-800';
+                    break;
+                case 'Platinum':
+                    planClass = 'bg-blue-100 text-blue-800';
+                    break;
+            }
+            
+            return `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-block ${planClass} text-xs font-semibold px-2 py-1 rounded-full">${investment.plan}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${formatCurrency(investment.amount)}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(investment.startDate).toLocaleDateString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(investment.endDate).toLocaleDateString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${investment.roi}%
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            ${investment.status}
+                        </span>
+                    </td>
+                </tr>
+            `;
+        };
+        
+        // Create performance chart
+        const createPerformanceChart = (data) => {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            const performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Portfolio Value (₦)',
+                        data: data.values,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#3b82f6',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '₦' + (value / 1000000).toFixed(1) + 'M';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        };
+        
+        // Mock data for demonstration
+        const mockUserData = {
+            name: "victorex trader 📈📉 option trader",
+            email: "CEO@pocket-investieproject1.com",
+            balance: 124580000,
+            earnings: 74530000,
+            availableBalance: 24500800,
+            investedAmount: 10000000,
+            todayEarnings: 2450000,
+            activeInvestments: 3,
+            investmentValue: 25000000
+        };
+        
+        const mockTransactions = [
+            { id: 1, type: 'deposit', description: "Bank Deposit", amount: 500000, status: "Completed", timestamp: new Date() },
+            { id: 2, type: 'investment', description: "Gold Investment", amount: 2000000, status: "Active", timestamp: new Date(Date.now() - 86400000) },
+            { id: 3, type: 'profit', description: "Profit Received", amount: 850000, status: "Completed", timestamp: new Date(Date.now() - 172800000) },
+            { id: 4, type: 'withdrawal', description: "Withdrawal Request", amount: 300000, status: "Completed", timestamp: new Date(Date.now() - 259200000) }
+        ];
+        
+        const mockInvestments = [
+            { id: 1, plan: "Platinum", amount: 9000000, startDate: new Date(2023, 11, 5), endDate: new Date(2023, 11, 15), roi: 120, status: "Running" },
+            { id: 2, plan: "Gold", amount: 3000000, startDate: new Date(2023, 11, 10), endDate: new Date(2023, 11, 17), roi: 85, status: "Running" },
+            { id: 3, plan: "Silver", amount: 500000, startDate: new Date(2023, 11, 12), endDate: new Date(2023, 11, 19), roi: 70, status: "Running" }
+        ];
+        
+        const mockChartData = {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            values: [500000, 750000, 900000, 1200000, 1500000, 1800000, 2100000, 2500000, 3000000, 3500000, 4000000, 4500000]
+        };
+        
+        // Simulate data loading with Firebase
+        const loadDashboardData = () => {
+            // Simulate API call delay
+            setTimeout(() => {
+                // Update user info
+                userNameEl.textContent = mockUserData.name;
+                userInitialsEl.textContent = getInitials(mockUserData.name);
+                
+                // Update stats
+                totalBalanceEl.innerHTML = formatCurrency(mockUserData.balance);
+                totalEarningsEl.innerHTML = formatCurrency(mockUserData.earnings);
+                activeInvestmentsEl.textContent = mockUserData.activeInvestments;
+                availableBalanceEl.textContent = `Available: ${formatCurrency(mockUserData.availableBalance)}`;
+                investedAmountEl.textContent = `Invested: ${formatCurrency(mockUserData.investedAmount)}`;
+                todayEarningsEl.textContent = `Today: +${formatCurrency(mockUserData.todayEarnings)}`;
+                investmentValueEl.textContent = `Value: ${formatCurrency(mockUserData.investmentValue)}`;
+                
+                // Update transactions
+                transactionsListEl.innerHTML = mockTransactions.map(renderTransaction).join('');
+                
+                // Update investments
+                investmentsTableEl.innerHTML = mockInvestments.map(renderInvestment).join('');
+                
+                // Create chart
+                createPerformanceChart(mockChartData);
+            }, 1500);
+        };
+        
+        // Check authentication state
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                // Redirect to login page if not authenticated
+                window.location.href = 'auth.html';
+            } else {
+                // User is signed in, load dashboard data
+                loadDashboardData();
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            auth.signOut().then(() => {
+                window.location.href = 'auth.html';
+            }).catch(error => {
+                console.error("Logout error:", error);
+            });
+        });
+
+        // Mobile menu toggle
+        document.querySelector('.mobile-menu').addEventListener('click', () => {
+            document.querySelector('.sidebar').classList.toggle('active');
+            document.querySelector('.overlay').classList.toggle('active');
+        });
+
+        document.querySelector('.overlay').addEventListener('click', () => {
+            document.querySelector('.sidebar').classList.remove('active');
+            document.querySelector('.overlay').classList.remove('active');
+        });
+    </script>
+</body>
+</html>
