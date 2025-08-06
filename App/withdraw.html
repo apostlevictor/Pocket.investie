@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw Funds - Pocket Investie</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #1a2a6c, #2a4d69);
+        }
+        .withdraw-card {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        .withdraw-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        .success-modal {
+            animation: modalAppear 0.4s ease-out;
+        }
+        @keyframes modalAppear {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-bar {
+            height: 6px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        .bank-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-chart-line text-blue-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-900">Pocket Investie</span>
+                    </div>
+                </div>
+                <div class="hidden md:ml-6 md:flex md:items-center space-x-8">
+                    <a href="dashboard.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Dashboard</a>
+                    <a href="invest.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Invest</a>
+                    <a href="withdraw.html" class="text-blue-600 font-semibold px-3 py-2 text-sm font-medium">Withdraw</a>
+                    <a href="transactions.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Transactions</a>
+                    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="md:w-1/2 mb-10 md:mb-0">
+                    <h1 class="text-4xl md:text-5xl font-bold leading-tight mb-4">Withdraw Your Profits</h1>
+                    <p class="text-xl mb-8">Transfer your investment earnings directly to your Nigerian bank account.</p>
+                    <div class="flex items-center">
+                        <div class="flex items-center mr-8">
+                            <i class="fas fa-shield-alt text-xl mr-2"></i>
+                            <span>Secure Transactions</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-xl mr-2"></i>
+                            <span>24-48 Hour Processing</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:w-1/2 flex justify-center">
+                    <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-6 max-w-md">
+                        <h3 class="text-xl font-bold mb-4">Withdrawal Summary</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span>Available Balance:</span>
+                                <span class="font-bold" id="availableBalance">₦0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Pending Withdrawals:</span>
+                                <span class="font-bold text-amber-300" id="pendingWithdrawals">₦0.00</span>
+                            </div>
+                            <div class="flex justify-between border-t border-white border-opacity-20 pt-3">
+                                <span>Total Withdrawn:</span>
+                                <span class="font-bold text-green-300" id="totalWithdrawn">₦0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Withdrawal Section -->
+    <section class="py-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Withdrawal Form -->
+                <div class="withdraw-card bg-white rounded-xl p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Withdrawal Request</h2>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Amount to Withdraw (₦)</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500">₦</span>
+                            </div>
+                            <input type="number" id="withdrawAmount" class="block w-full pl-8 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Enter amount" min="5000">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500">NGN</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Minimum withdrawal: ₦5,000</p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Bank</label>
+                        <select id="bankSelect" class="bank-select block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select your bank</option>
+                            <!-- Nigerian banks will be populated here -->
+                        </select>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+                        <input type="text" id="accountNumber" class="block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Enter account number">
+                    </div>
+                    
+                    <div class="mb-8">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Account Name</label>
+                        <input type="text" id="accountName" class="block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Account name will appear here" readonly>
+                    </div>
+                    
+                    <button id="submitWithdrawal" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-300">
+                        Request Withdrawal
+                    </button>
+                </div>
+                
+                <!-- Withdrawal Information -->
+                <div>
+                    <div class="withdraw-card bg-white rounded-xl p-8 mb-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Withdrawal Process</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 bg-blue-100 rounded-full w-8 h-8 flex items-center justify-center mr-4">
+                                    <span class="text-blue-800 font-bold">1</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium">Submit Request</h4>
+                                    <p class="text-gray-600 text-sm mt-1">Fill the withdrawal form with your bank details and amount.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 bg-blue-100 rounded-full w-8 h-8 flex items-center justify-center mr-4">
+                                    <span class="text-blue-800 font-bold">2</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium">Admin Approval</h4>
+                                    <p class="text-gray-600 text-sm mt-1">Our team will review and approve your request within 24-48 hours.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 bg-blue-100 rounded-full w-8 h-8 flex items-center justify-center mr-4">
+                                    <span class="text-blue-800 font-bold">3</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium">Funds Transfer</h4>
+                                    <p class="text-gray-600 text-sm mt-1">Once approved, funds will be transferred to your bank account.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="withdraw-card bg-white rounded-xl p-8">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Important Notes</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1">
+                                    <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                                </div>
+                                <p class="text-gray-600 text-sm">Withdrawals are processed Monday to Friday between 9am - 5pm.</p>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1">
+                                    <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                                </div>
+                                <p class="text-gray-600 text-sm">Ensure your bank account details are correct to avoid delays.</p>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1">
+                                    <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                                </div>
+                                <p class="text-gray-600 text-sm">A minimum of ₦5,000 is required for withdrawals.</p>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1">
+                                    <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                                </div>
+                                <p class="text-gray-600 text-sm">You will receive email and SMS notifications at each stage.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Withdrawals -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Recent Withdrawals</h2>
+                <a href="transactions.html" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View All Transactions</a>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bank</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="withdrawalsList">
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center">
+                                <i class="fas fa-spinner fa-spin text-blue-500 text-xl mb-3"></i>
+                                <p class="text-gray-600">Loading withdrawal history...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Processing Modal -->
+    <div id="processingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-spinner fa-spin text-blue-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Processing Withdrawal</h3>
+                <p class="text-gray-600 mb-6">Please wait while we process your withdrawal request</p>
+                
+                <div class="progress-bar mb-6">
+                    <div class="progress-fill" id="withdrawalProgress"></div>
+                </div>
+                
+                <p class="text-xs text-gray-500">
+                    <i class="fas fa-shield-alt text-green-500 mr-1"></i>
+                    Secured by Pocket Investie
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="success-modal bg-white rounded-xl p-8 w-full max-w-md text-center">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-check-circle text-green-600 text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Withdrawal Request Submitted!</h3>
+            <p class="text-gray-600 mb-6">Your withdrawal request has been received and is being processed.</p>
+            
+            <div class="bg-gray-50 rounded-xl p-5 mb-6 text-left">
+                <div class="flex justify-between mb-3">
+                    <span class="text-gray-600">Amount:</span>
+                    <span class="font-medium" id="successAmount">₦0.00</span>
+                </div>
+                <div class="flex justify-between mb-3">
+                    <span class="text-gray-600">Bank:</span>
+                    <span class="font-medium" id="successBank">Bank Name</span>
+                </div>
+                <div class="flex justify-between mb-3">
+                    <span class="text-gray-600">Account:</span>
+                    <span class="font-medium" id="successAccount">Account Number</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Reference:</span>
+                    <span class="font-medium" id="successReference">WD-123456</span>
+                </div>
+            </div>
+            
+            <div class="flex space-x-4">
+                <button id="closeSuccess" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-medium transition duration-300">
+                    View Dashboard
+                </button>
+                <button id="newWithdrawal" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition duration-300">
+                    New Withdrawal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-chart-line text-blue-400 mr-2"></i>
+                        Pocket Investie
+                    </h3>
+                    <p class="text-gray-400 mb-4">"Invest Smart, Grow Your Wealth" - A secure Naira-based investment platform.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-3">
+                        <li><a href="dashboard.html" class="text-gray-400 hover:text-white">Dashboard</a></li>
+                        <li><a href="invest.html" class="text-gray-400 hover:text-white">Investments</a></li>
+                        <li><a href="deposit.html" class="text-gray-400 hover:text-white">Deposit Funds</a></li>
+                        <li><a href="withdraw.html" class="text-gray-400 hover:text-white">Withdraw Funds</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Legal</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Investment Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Risk Disclosure</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Support</h4>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fas fa-envelope text-blue-400 mr-2 mt-1"></i>
+                            <a href="mailto:victorexbinarysignalbot@gmail.com" class="text-gray-400 hover:text-white">victorexbinarysignalbot@gmail.com</a>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-phone text-blue-400 mr-2 mt-1"></i>
+                            <a href="tel:+2347062791952" class="text-gray-400 hover:text-white">+234 706 279 1952</a>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-comments text-blue-400 mr-2 mt-1"></i>
+                            <span class="text-gray-400">Live Chat: 24/7</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-10 pt-6 text-center text-gray-400 text-sm">
+                <p>© 2025 Pocket Investie. Developed and managed by Victorex Binary Option Traders. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM elements
+        const availableBalance = document.getElementById('availableBalance');
+        const pendingWithdrawals = document.getElementById('pendingWithdrawals');
+        const totalWithdrawn = document.getElementById('totalWithdrawn');
+        const withdrawAmount = document.getElementById('withdrawAmount');
+        const bankSelect = document.getElementById('bankSelect');
+        const accountNumber = document.getElementById('accountNumber');
+        const accountName = document.getElementById('accountName');
+        const submitWithdrawal = document.getElementById('submitWithdrawal');
+        const withdrawalsList = document.getElementById('withdrawalsList');
+        const processingModal = document.getElementById('processingModal');
+        const withdrawalProgress = document.getElementById('withdrawalProgress');
+        const successModal = document.getElementById('successModal');
+        const closeSuccess = document.getElementById('closeSuccess');
+        const newWithdrawal = document.getElementById('newWithdrawal');
+        const successAmount = document.getElementById('successAmount');
+        const successBank = document.getElementById('successBank');
+        const successAccount = document.getElementById('successAccount');
+        const successReference = document.getElementById('successReference');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Current user data
+        let currentUser = null;
+        let userData = null;
+
+        // Nigerian banks list
+        const nigerianBanks = [
+            { code: "044", name: "Access Bank" },
+            { code: "023", name: "Citibank Nigeria" },
+            { code: "063", name: "Diamond Bank" },
+            { code: "050", name: "Ecobank Nigeria" },
+            { code: "070", name: "Fidelity Bank" },
+            { code: "011", name: "First Bank of Nigeria" },
+            { code: "214", name: "First City Monument Bank" },
+            { code: "058", name: "Guaranty Trust Bank" },
+            { code: "030", name: "Heritage Bank" },
+            { code: "301", name: "Jaiz Bank" },
+            { code: "082", name: "Keystone Bank" },
+            { code: "076", name: "Polaris Bank" },
+            { code: "101", name: "Providus Bank" },
+            { code: "221", name: "Stanbic IBTC Bank" },
+            { code: "068", name: "Standard Chartered Bank" },
+            { code: "232", name: "Sterling Bank" },
+            { code: "100", name: "Suntrust Bank" },
+            { code: "032", name: "Union Bank of Nigeria" },
+            { code: "033", name: "United Bank for Africa" },
+            { code: "215", name: "Unity Bank" },
+            { code: "035", name: "Wema Bank" },
+            { code: "057", name: "Zenith Bank" }
+             { code: "057", name: "Zenith Zenith" }
+        ];
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check auth state
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    loadUserData();
+                    loadRecentWithdrawals();
+                    populateBanks();
+                    setupEventListeners();
+                } else {
+                    // Redirect to login if not authenticated
+                    window.location.href = 'auth.html';
+                }
+            });
+        });
+
+        // Load user data from Firestore
+        function loadUserData() {
+            db.collection("users").doc(currentUser.uid).onSnapshot(doc => {
+                if (doc.exists) {
+                    userData = doc.data();
+                    // Update balances
+                    availableBalance.textContent = `₦${(userData.walletBalance || 0).toLocaleString()}`;
+                    pendingWithdrawals.textContent = `₦${(userData.pendingWithdrawal || 0).toLocaleString()}`;
+                    totalWithdrawn.textContent = `₦${(userData.totalWithdrawn || 0).toLocaleString()}`;
+                } else {
+                    console.log("No user data found");
+                }
+            });
+        }
+
+        // Populate Nigerian banks dropdown
+        function populateBanks() {
+            bankSelect.innerHTML = '<option value="">Select your bank</option>';
+            nigerianBanks.forEach(bank => {
+                const option = document.createElement('option');
+                option.value = bank.name;
+                option.textContent = bank.name;
+                bankSelect.appendChild(option);
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Account number validation (Paystack API simulation)
+            accountNumber.addEventListener('input', () => {
+                const bank = bankSelect.value;
+                const accNum = accountNumber.value;
+                
+                if (bank && accNum.length === 10) {
+                    // Simulate account name resolution (in real app, use Paystack API)
+                    setTimeout(() => {
+                        accountName.value = "Verified Account Name";
+                    }, 1000);
+                }
+            });
+            
+            // Withdrawal form submission
+            submitWithdrawal.addEventListener('click', processWithdrawal);
+            
+            // Success modal buttons
+            closeSuccess.addEventListener('click', () => {
+                successModal.classList.add('hidden');
+                window.location.href = 'dashboard.html';
+            });
+            
+            newWithdrawal.addEventListener('click', () => {
+                successModal.classList.add('hidden');
+                resetForm();
+            });
+            
+            // Logout button
+            logoutBtn.addEventListener('click', signOut);
+        }
+
+        // Load recent withdrawals
+        function loadRecentWithdrawals() {
+            db.collection("withdrawals")
+                .where("userId", "==", currentUser.uid)
+                .orderBy("createdAt", "desc")
+                .limit(5)
+                .get()
+                .then(querySnapshot => {
+                    withdrawalsList.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        withdrawalsList.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="px-6 py-8 text-center text-gray-600">
+                                    <i class="fas fa-exchange-alt text-2xl mb-3"></i>
+                                    <p>No withdrawal history found</p>
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    querySnapshot.forEach(doc => {
+                        const withdrawal = doc.data();
+                        withdrawalsList.innerHTML += createWithdrawalRow(withdrawal);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error loading withdrawals:", error);
+                    withdrawalsList.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-red-500">
+                                <i class="fas fa-exclamation-triangle text-xl mb-3"></i>
+                                <p>Failed to load withdrawal history</p>
+                            </td>
+                        </tr>
+                    `;
+                });
+        }
+
+        // Create withdrawal row HTML
+        function createWithdrawalRow(withdrawal) {
+            const date = withdrawal.createdAt?.toDate().toLocaleDateString() || 'N/A';
+            let statusClass = 'bg-yellow-100 text-yellow-800';
+            if (withdrawal.status === 'completed') statusClass = 'bg-green-100 text-green-800';
+            if (withdrawal.status === 'failed') statusClass = 'bg-red-100 text-red-800';
+            
+            return `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">₦${(withdrawal.amount || 0).toLocaleString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${withdrawal.bankName || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full ${statusClass}">
+                            ${withdrawal.status?.charAt(0).toUpperCase() + withdrawal.status?.slice(1) || 'Pending'}
+                        </span>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Process withdrawal request
+         function processWithdrawal() {
+            const amount = parseFloat(withdrawAmount.value);
+            const bank = bankSelect.value;
+            const accNumber = accountNumber.value;
+            const accName = accountName.value;
+            
+            // Validate form
+            if (!amount || amount < 5000) {
+                alert('Minimum withdrawal amount is ₦5,000');
+                return;
+            }
+            
+            if (!bank) {
+                alert('Please select your bank');
+                return;
+            }
+            
+            if (!accNumber || accNumber.length !== 10) {
+                alert('Please enter a valid 10-digit account number');
+                return;
+            }
+            
+            if (!accName) {
+                alert('Account name verification failed. Please check your account number');
+                return;
+            }
+            
+            // Validate balance
+            if (amount > (userData.walletBalance || 0)) {
+                alert('Insufficient balance for this withdrawal');
+                return;
+            }
+            
+            // Show processing modal
+            processingModal.classList.remove('hidden');
+            
+            // Simulate progress animation
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                withdrawalProgress.style.width = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    submitWithdrawalRequest(amount, bank, accNumber, accName);
+                }
+            }, 200);
+        }
+
+        // Submit withdrawal request to Firestore
+        function submitWithdrawalRequest(amount, bank, accNumber, accName) {
+            // Generate reference
+            const reference = 'WD-' + Date.now().toString().slice(-6);
+            
+            // Create withdrawal data
+            const withdrawalData = {
+                userId: currentUser.uid,
+                amount: amount,
+                bankName: bank,
+                accountNumber: accNumber,
+                accountName: accName,
+                status: 'pending',
+                reference: reference,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            // Update user data
+            const newBalance = (userData.walletBalance || 0) - amount;
+            const pendingWithdrawal = (userData.pendingWithdrawal || 0) + amount;
+            
+            // Batch write for atomic operations
+            const batch = db.batch();
+            
+            // Add withdrawal request
+            const withdrawalRef = db.collection('withdrawals').doc();
+            batch.set(withdrawalRef, withdrawalData);
+            
+            // Update user
+            const userRef = db.collection('users').doc(currentUser.uid);
+            batch.update(userRef, {
+                walletBalance: newBalance,
+                pendingWithdrawal: pendingWithdrawal
+            });
+            
+            // Add transaction record
+            const transactionRef = db.collection('transactions').doc();
+            batch.set(transactionRef, {
+                userId: currentUser.uid,
+                type: 'withdrawal',
+                amount: amount,
+                description: `Withdrawal to ${bank} (${accNumber})`,
+                status: 'pending',
+                reference: reference,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // Commit batch
+            batch.commit()
+                .then(() => {
+                    // Hide processing modal
+                    processingModal.classList.add('hidden');
+                    
+                    // Show success modal
+                    successAmount.textContent = `₦${amount.toLocaleString()}`;
+                    successBank.textContent = bank;
+                    successAccount.textContent = accNumber;
+                    successReference.textContent = reference;
+                    successModal.classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error("Error processing withdrawal:", error);
+                    processingModal.classList.add('hidden');
+                    alert('An error occurred while processing your withdrawal. Please try again.');
+                });
+        }
+
+        // Reset form after successful submission
+        function resetForm() {
+            withdrawAmount.value = '';
+            bankSelect.value = '';
+            accountNumber.value = '';
+            accountName.value = '';
+        }
+
+        // Sign out function
+        function signOut() {
+            auth.signOut().then(() => {
+                window.location.href = 'auth.html';
+            }).catch(error => {
+                console.error("Sign out error:", error);
+            });
+        }
+    </script>
+</body>
+</html>
