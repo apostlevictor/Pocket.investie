@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Pocket Investie</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <style>
+        .login-card {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        .login-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast.success {
+            background-color: #10b981;
+        }
+        .toast.error {
+            background-color: #ef4444;
+        }
+        .toast.info {
+            background-color: #3b82f6;
+        }
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-100 min-h-screen flex items-center justify-center">
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- Login Card -->
+    <div class="login-card bg-white rounded-xl p-8 w-full max-w-md mx-4">
+        <div class="text-center mb-8">
+            <div class="flex justify-center mb-4">
+                <i class="fas fa-chart-line text-blue-600 text-4xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900">Pocket Investie</h1>
+            <p class="text-gray-600 mt-2">Admin Portal</p>
+        </div>
+        
+        <form id="adminLoginForm">
+            <div class="mb-6">
+                <label for="adminEmail" class="block text-sm font-medium text-gray-700 mb-1">Admin Email</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-envelope text-gray-400"></i>
+                    </div>
+                    <input type="email" id="adminEmail" class="block w-full pl-10 py-3 px-4 border border-gray-300 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="admin@example.com" required>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label for="adminPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-lock text-gray-400"></i>
+                    </div>
+                    <input type="password" id="adminPassword" class="block w-full pl-10 py-3 px-4 border border-gray-300 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••" required minlength="6">
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <input id="rememberMe" type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="rememberMe" class="ml-2 block text-sm text-gray-700">Remember me</label>
+                </div>
+                <a href="forgot_password.html" class="text-sm text-blue-600 hover:text-blue-500">Forgot password?</a>
+            </div>
+            
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition duration-300 flex items-center justify-center">
+                <span id="loginBtnText">Login</span>
+                <span id="loginSpinner" class="ml-2 hidden">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Firebase Configuration and App Script -->
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
+            authDomain: "pocket-investie.firebaseapp.com",
+            projectId: "pocket-investie",
+            storageBucket: "pocket-investie.firebasestorage.app",
+            messagingSenderId: "246875262393",
+            appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const adminLoginForm = document.getElementById('adminLoginForm');
+        const adminEmail = document.getElementById('adminEmail');
+        const adminPassword = document.getElementById('adminPassword');
+        const rememberMe = document.getElementById('rememberMe');
+        const loginBtnText = document.getElementById('loginBtnText');
+        const loginSpinner = document.getElementById('loginSpinner');
+        const toast = document.getElementById('toast');
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Check if user is already logged in
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Check if user is admin
+                checkAdminStatus(user.uid);
+            }
+        });
+
+        // Check if user has admin privileges
+        function checkAdminStatus(uid) {
+            db.collection('admins').doc(uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        // User is admin, redirect to dashboard
+                        window.location.href = 'admin_dashboard.html';
+                    } else {
+                        // User is not admin, sign them out
+                        auth.signOut().then(() => {
+                            showToast('You do not have admin privileges', 'error');
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking admin status:', error);
+                    showToast('Error verifying admin status', 'error');
+                });
+        }
+
+        // Admin login
+        adminLoginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = @pocketinvestie.value;
+            const password = Ch1kams__00.value;
+            
+            // Show loading state
+            loginBtnText.textContent = 'Logging in...';
+            loginSpinner.classList.remove('hidden');
+            
+            try {
+                // Set persistence based on remember me checkbox
+                const persistence = rememberMe.checked ? 
+                    firebase.auth.Auth.Persistence.LOCAL : 
+                    firebase.auth.Auth.Persistence.SESSION;
+                
+                await auth.setPersistence(persistence);
+                
+                // Sign in with email and password
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Verify admin status
+                const adminDoc = await db.collection('admins').doc(user.uid).get();
+                
+                if (adminDoc.exists) {
+                    // Admin verified, redirect to dashboard
+                    window.location.href = 'admin_dashboard.html';
+                    
+                    // Add login activity to admin log
+                    await db.collection('adminLogs').add({
+                        adminId: user.uid,
+                        email: user.email,
+                        action: 'login',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        ipAddress: '', // You would get this from request headers in a real app
+                        userAgent: navigator.userAgent
+                    });
+                } else {
+                    // Not an admin, sign out
+                    await auth.signOut();
+                    showToast('You do not have admin privileges', 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                
+                let errorMessage = 'Login failed. Please try again.';
+                switch (error.code) {
+                    case 'auth/invalid-email':
+                        errorMessage = 'Invalid email address';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMessage = 'This account has been disabled';
+                        break;
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                        errorMessage = 'Invalid email or password';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Too many attempts. Account temporarily locked.';
+                        break;
+                }
+                
+                showToast(errorMessage, 'error');
+            } finally {
+                // Reset loading state
+                loginBtnText.textContent = 'Login';
+                loginSpinner.classList.add('hidden');
+            }
+        });
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for remember me
+            if (localStorage.getItem('rememberAdminEmail')) {
+                adminEmail.value = localStorage.getItem('rememberAdminEmail');
+                rememberMe.checked = true;
+            }
+            
+            // Save email if remember me is checked
+            rememberMe.addEventListener('change', () => {
+                if (rememberMe.checked) {
+                    localStorage.setItem('rememberAdminEmail', adminEmail.value);
+                } else {
+                    localStorage.removeItem('rememberAdminEmail');
+                }
+            });
+            
+            // Auto-save email when typing if remember me is checked
+            adminEmail.addEventListener('input', () => {
+                if (rememberMe.checked) {
+                    localStorage.setItem('rememberAdminEmail', adminEmail.value);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
