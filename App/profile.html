@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Pocket Investie</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <style>
+        .profile-card {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .tab-button.active {
+            color: #3b82f6;
+        }
+        .tab-button.active:after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #3b82f6;
+        }
+        .verification-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .verified {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .unverified {
+            background-color: #fffbeb;
+            color: #854d0e;
+        }
+        .input-disabled {
+            background-color: #f9fafb;
+            cursor: not-allowed;
+        }
+        .avatar-upload {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+        }
+        .avatar-upload .avatar-preview {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .avatar-upload .upload-btn {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .security-item {
+            transition: all 0.3s ease;
+        }
+        .security-item:hover {
+            background-color: #f9fafb;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast.success {
+            background-color: #10b981;
+        }
+        .toast.error {
+            background-color: #ef4444;
+        }
+        .toast.info {
+            background-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50">
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-chart-line text-blue-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-900">Pocket Investie</span>
+                    </div>
+                </div>
+                <div class="hidden md:ml-6 md:flex md:items-center space-x-8">
+                    <a href="dashboard.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Dashboard</a>
+                    <a href="invest.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Invest</a>
+                    <a href="withdraw.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Withdraw</a>
+                    <a href="profile.html" class="text-blue-600 font-semibold px-3 py-2 text-sm font-medium">Profile</a>
+                    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Section -->
+    <section class="py-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row gap-8">
+                <!-- Profile Sidebar -->
+                <div class="md:w-1/3">
+                    <div class="profile-card bg-white rounded-xl p-6 sticky top-6">
+                        <div class="text-center mb-6">
+                            <div class="avatar-upload mb-4">
+                                <div class="avatar-preview bg-gray-200" id="avatarPreview">
+                                    <!-- Avatar will be displayed here -->
+                                </div>
+                                <div class="upload-btn" id="uploadBtn">
+                                    <i class="fas fa-camera text-sm"></i>
+                                    <input type="file" id="avatarInput" class="hidden" accept="image/*">
+                                </div>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-900" id="profileName">Loading...</h2>
+                            <p class="text-gray-600" id="profileEmail">user@example.com</p>
+                            <div class="mt-2" id="verificationStatus">
+                                <span class="verification-badge unverified">
+                                    <i class="fas fa-envelope mr-1"></i> Unverified
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 pt-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-gray-600">Member Since</span>
+                                <span class="font-medium" id="memberSince">Jan 2023</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-gray-600">Account Status</span>
+                                <span class="font-medium text-green-600">Active</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Last Login</span>
+                                <span class="font-medium" id="lastLogin">2 hours ago</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-card bg-white rounded-xl p-6 mt-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Wallet Balance</h3>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-600">Available</span>
+                            <span class="font-bold" id="walletBalance">₦0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-600">Invested</span>
+                            <span class="font-bold" id="investedAmount">₦0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Total Profit</span>
+                            <span class="font-bold text-green-600" id="totalProfit">₦0.00</span>
+                        </div>
+                        <div class="mt-6 grid grid-cols-2 gap-3">
+                            <a href="deposit.html" class="bg-blue-600 hover:bg-blue-700 text-white text-center py-2 rounded-lg text-sm font-medium transition duration-300">
+                                Deposit
+                            </a>
+                            <a href="withdraw.html" class="bg-green-600 hover:bg-green-700 text-white text-center py-2 rounded-lg text-sm font-medium transition duration-300">
+                                Withdraw
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Profile Content -->
+                <div class="md:w-2/3">
+                    <!-- Tabs -->
+                    <div class="flex border-b border-gray-200 mb-6">
+                        <button class="tab-button active px-4 py-2 text-sm font-medium" data-tab="profile">
+                            Profile Details
+                        </button>
+                        <button class="tab-button px-4 py-2 text-sm font-medium" data-tab="security">
+                            Security
+                        </button>
+                        <button class="tab-button px-4 py-2 text-sm font-medium" data-tab="activity">
+                            Activity
+                        </button>
+                    </div>
+                    
+                    <!-- Profile Tab -->
+                    <div id="profileTab" class="profile-content">
+                        <div class="profile-card bg-white rounded-xl p-6 mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 mb-6">Personal Information</h3>
+                            
+                            <form id="profileForm">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                        <input type="text" id="firstName" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                        <input type="text" id="lastName" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                    <input type="email" id="email" class="block w-full py-2 px-3 border border-gray-300 rounded-lg input-disabled" disabled>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                        <input type="tel" id="phone" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                                        <input type="date" id="dob" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                    <input type="text" id="address" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                
+                                <div class="flex justify-end">
+                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition duration-300">
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="profile-card bg-white rounded-xl p-6">
+                            <h3 class="text-lg font-bold text-gray-900 mb-6">Bank Information</h3>
+                            
+                            <form id="bankForm">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                                    <select id="bankName" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">Select your bank</option>
+                                        <option value="Access Bank">Access Bank</option>
+                                        <option value="First Bank">First Bank</option>
+                                        <option value="Moniepoint MFB">Moniepoint MFB</option>
+                                        <option value="Zenith Bank">Zenith Bank</option>
+                                        <option value="UBA">UBA</option>
+                                        <option value="Fidelity Bank">Fidelity Bank</option>
+                                        <option value="Stanbic IBTC">Stanbic IBTC</option>
+                                        <option value="Union Bank">Union Bank</option>
+                                        <option value="palmpay">palmpay</option>
+                                        <option value="Polaris Bank">Polaris Bank</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                                    <input type="text" id="accountNumber" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Enter account number">
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
+                                    <input type="text" id="accountName" class="block w-full py-2 px-3 border border-gray-300 rounded-lg input-disabled" placeholder="Account name will appear here" readonly>
+                                </div>
+                                
+                                <div class="flex justify-end">
+                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition duration-300">
+                                        Update Bank Details
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Security Tab -->
+                    <div id="securityTab" class="profile-content hidden">
+                        <div class="profile-card bg-white rounded-xl p-6 mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 mb-6">Account Security</h3>
+                            
+                            <div class="space-y-4">
+                                <div class="security-item p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <h4 class="font-medium">Email Verification</h4>
+                                            <p class="text-sm text-gray-600" id="emailVerificationText">Your email is not verified</p>
+                                        </div>
+                                        <button id="verifyEmailBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-lg text-sm font-medium transition duration-300">
+                                            Verify Email
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="security-item p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <h4 class="font-medium">Password</h4>
+                                            <p class="text-sm text-gray-600" id="passwordLastChanged">Last changed 3 months ago</p>
+                                        </div>
+                                        <button id="changePasswordBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-lg text-sm font-medium transition duration-300">
+                                            Change Password
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="security-item p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <h4 class="font-medium">Two-Factor Authentication</h4>
+                                            <p class="text-sm text-gray-600">Add an extra layer of security</p>
+                                        </div>
+                                        <button id="enable2faBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-1 rounded-lg text-sm font-medium transition duration-300">
+                                            Enable 2FA
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-card bg-white rounded-xl p-6">
+                            <h3 class="text-lg font-bold text-gray-900 mb-6">Security Activity</h3>
+                             <div class="space-y-4" id="securityActivity">
+                                <!-- Activity logs will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Activity Tab -->
+                    <div id="activityTab" class="profile-content hidden">
+                        <div class="profile-card bg-white rounded-xl p-6">
+                            <h3 class="text-lg font-bold text-gray-900 mb-6">Recent Activity</h3>
+                            
+                            <div class="space-y-4" id="userActivity">
+                                <!-- User activity logs will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Change Password</h3>
+                <button id="closePasswordModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="changePasswordForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                    <input type="password" id="currentPassword" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                    <input type="password" id="newPassword" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required minlength="6">
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required minlength="6">
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancelPasswordChange" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition duration-300">
+                        Cancel
+                    </button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition duration-300">
+                        Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase Configuration and App Script -->
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
+            authDomain: "pocket-investie.firebaseapp.com",
+            projectId: "pocket-investie",
+            storageBucket: "pocket-investie.firebasestorage.app",
+            messagingSenderId: "246875262393",
+            appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const logoutBtn = document.getElementById('logoutBtn');
+        const profileName = document.getElementById('profileName');
+        const profileEmail = document.getElementById('profileEmail');
+        const verificationStatus = document.getElementById('verificationStatus');
+        const memberSince = document.getElementById('memberSince');
+        const lastLogin = document.getElementById('lastLogin');
+        const walletBalance = document.getElementById('walletBalance');
+        const investedAmount = document.getElementById('investedAmount');
+        const totalProfit = document.getElementById('totalProfit');
+        
+        // Form elements
+        const profileForm = document.getElementById('profileForm');
+        const firstName = document.getElementById('firstName');
+        const lastName = document.getElementById('lastName');
+        const email = document.getElementById('email');
+        const phone = document.getElementById('phone');
+        const dob = document.getElementById('dob');
+        const address = document.getElementById('address');
+        
+        // Bank form elements
+        const bankForm = document.getElementById('bankForm');
+        const bankName = document.getElementById('bankName');
+        const accountNumber = document.getElementById('accountNumber');
+        const accountName = document.getElementById('accountName');
+        
+        // Security elements
+        const verifyEmailBtn = document.getElementById('verifyEmailBtn');
+        const emailVerificationText = document.getElementById('emailVerificationText');
+        const changePasswordBtn = document.getElementById('changePasswordBtn');
+        const passwordLastChanged = document.getElementById('passwordLastChanged');
+        const enable2faBtn = document.getElementById('enable2faBtn');
+        const securityActivity = document.getElementById('securityActivity');
+        
+        // Activity elements
+        const userActivity = document.getElementById('userActivity');
+        
+        // Tabs
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const profileTab = document.getElementById('profileTab');
+        const securityTab = document.getElementById('securityTab');
+        const activityTab = document.getElementById('activityTab');
+        
+        // Password modal
+        const changePasswordModal = document.getElementById('changePasswordModal');
+        const closePasswordModal = document.getElementById('closePasswordModal');
+        const cancelPasswordChange = document.getElementById('cancelPasswordChange');
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        const currentPassword = document.getElementById('currentPassword');
+        const newPassword = document.getElementById('newPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+        
+        // Toast notification
+        const toast = document.getElementById('toast');
+
+        // Tab switching
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tab = button.getAttribute('data-tab');
+                
+                // Update active tab button
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Show the selected tab content
+                profileTab.classList.add('hidden');
+                securityTab.classList.add('hidden');
+                activityTab.classList.add('hidden');
+                
+                if (tab === 'profile') {
+                    profileTab.classList.remove('hidden');
+                } else if (tab === 'security') {
+                    securityTab.classList.remove('hidden');
+                } else if (tab === 'activity') {
+                    activityTab.classList.remove('hidden');
+                }
+            });
+        });
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Format date
+        function formatDate(date) {
+            if (!date) return 'N/A';
+            
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(date).toLocaleDateString('en-US', options);
+        }
+
+        // Format time ago
+        function timeAgo(date) {
+            if (!date) return 'N/A';
+            
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            
+            let interval = Math.floor(seconds / 31536000);
+            if (interval >= 1) return interval + " year" + (interval === 1 ? "" : "s") + " ago";
+            
+            interval = Math.floor(seconds / 2592000);
+            if (interval >= 1) return interval + " month" + (interval === 1 ? "" : "s") + " ago";
+            
+            interval = Math.floor(seconds / 86400);
+            if (interval >= 1) return interval + " day" + (interval === 1 ? "" : "s") + " ago";
+            
+            interval = Math.floor(seconds / 3600);
+            if (interval >= 1) return interval + " hour" + (interval === 1 ? "" : "s") + " ago";
+            
+            interval = Math.floor(seconds / 60);
+            if (interval >= 1) return interval + " minute" + (interval === 1 ? "" : "s") + " ago";
+            
+            return Math.floor(seconds) + " second" + (seconds === 1 ? "" : "s") + " ago";
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-NG', {
+                style: 'currency',
+                currency: 'NGN'
+            }).format(amount || 0);
+        }
+
+        // Load user data
+        function loadUserData(user) {
+            if (!user) return;
+            
+            // Basic info from Firebase Auth
+            profileName.textContent = user.displayName || 'User';
+            profileEmail.textContent = user.email;
+            
+            // Email verification status
+            if (user.emailVerified) {
+                verificationStatus.innerHTML = `
+                    <span class="verification-badge verified">
+                        <i class="fas fa-check-circle mr-1"></i> Verified
+                    </span>
+                `;
+                emailVerificationText.textContent = 'Your email is verified';
+                verifyEmailBtn.classList.add('hidden');
+            } else {
+                verificationStatus.innerHTML = `
+                    <span class="verification-badge unverified">
+                        <i class="fas fa-envelope mr-1"></i> Unverified
+                    </span>
+                `;
+                emailVerificationText.textContent = 'Your email is not verified';
+                verifyEmailBtn.classList.remove('hidden');
+            }
+            
+            // Member since and last login
+            memberSince.textContent = formatDate(user.metadata.creationTime);
+            lastLogin.textContent = timeAgo(user.metadata.lastSignInTime);
+            
+            // Load additional user data from Firestore
+            db.collection('users').doc(user.uid).get().then(doc => {
+                if (doc.exists) {
+                    const userData = doc.data();
+                    
+                    // Profile form data
+                    firstName.value = userData.firstName || '';
+                    lastName.value = userData.lastName || '';
+                    phone.value = userData.phone || '';
+                    dob.value = userData.dob || '';
+                    address.value = userData.address || '';
+                    
+                    // Bank details
+                    bankName.value = userData.bankName || '';
+                    accountNumber.value = userData.accountNumber || '';
+                    accountName.value = userData.accountName || '';
+                    
+                    // Wallet data
+                    walletBalance.textContent = formatCurrency(userData.walletBalance);
+                    investedAmount.textContent = formatCurrency(userData.investedAmount);
+                    totalProfit.textContent = formatCurrency(userData.totalProfit);
+                    
+                    // Password last changed
+                    if (userData.passwordLastChanged) {
+                        passwordLastChanged.textContent = `Last changed ${timeAgo(userData.passwordLastChanged)}`;
+                    }
+                    
+                    // Avatar
+                    if (userData.photoURL) {
+                        document.getElementById('avatarPreview').style.backgroundImage = `url(${userData.photoURL})`;
+                    }
+                    
+                    // Security activity
+                    if (userData.securityActivity) {
+                        securityActivity.innerHTML = userData.securityActivity.map(activity => `
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1 mr-3 ${activity.type === 'success' ? 'text-green-500' : activity.type === 'info' ? 'text-blue-500' : 'text-gray-500'}">
+                                    <i class="${activity.icon || 'fas fa-info-circle'}"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium">${activity.title}</p>
+                                    <p class="text-xs text-gray-500">${activity.description} • ${timeAgo(activity.timestamp)}</p>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                    
+                    // User activity
+                     if (userData.userActivity) {
+                        userActivity.innerHTML = userData.userActivity.map(activity => `
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-1 mr-3 ${activity.type === 'success' ? 'text-green-500' : activity.type === 'info' ? 'text-blue-500' : 'text-gray-500'}">
+                                    <i class="${activity.icon || 'fas fa-info-circle'}"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium">${activity.title}</p>
+                                    <p class="text-xs text-gray-500">${activity.description} • ${timeAgo(activity.timestamp)}</p>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            }).catch(error => {
+                console.error('Error getting user document:', error);
+                showToast('Error loading user data', 'error');
+            });
+        }
+
+        // Update profile
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            try {
+                // Update profile in Firebase Auth
+                await user.updateProfile({
+                    displayName: `${firstName.value} ${lastName.value}`
+                });
+                
+                // Update user data in Firestore
+                await db.collection('users').doc(user.uid).set({
+                    firstName: firstName.value,
+                    lastName: lastName.value,
+                    phone: phone.value,
+                    dob: dob.value,
+                    address: address.value,
+                    updatedAt: new Date()
+                }, { merge: true });
+                
+                // Update displayed name
+                profileName.textContent = `${firstName.value} ${lastName.value}`;
+                
+                showToast('Profile updated successfully');
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showToast('Error updating profile', 'error');
+            }
+        });
+
+        // Update bank details
+        bankForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            try {
+                // In a real app, you would verify the account number with your bank API
+                // For this demo, we'll just set the account name to "Verified Account"
+                const verifiedAccountName = "Verified Account";
+                
+                await db.collection('users').doc(user.uid).set({
+                    bankName: bankName.value,
+                    accountNumber: accountNumber.value,
+                    accountName: verifiedAccountName,
+                    updatedAt: new Date()
+                }, { merge: true });
+                
+                accountName.value = verifiedAccountName;
+                
+                showToast('Bank details updated successfully');
+            } catch (error) {
+                console.error('Error updating bank details:', error);
+                showToast('Error updating bank details', 'error');
+            }
+        });
+
+        // Verify email
+        verifyEmailBtn.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            try {
+                await user.sendEmailVerification();
+                showToast('Verification email sent. Please check your inbox.', 'info');
+            } catch (error) {
+                console.error('Error sending verification email:', error);
+                showToast('Error sending verification email', 'error');
+            }
+        });
+
+        // Change password modal
+        changePasswordBtn.addEventListener('click', () => {
+            changePasswordModal.classList.remove('hidden');
+        });
+        
+        closePasswordModal.addEventListener('click', () => {
+            changePasswordModal.classList.add('hidden');
+        });
+        
+        cancelPasswordChange.addEventListener('click', () => {
+            changePasswordModal.classList.add('hidden');
+        });
+
+        // Change password
+        changePasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            if (newPassword.value !== confirmPassword.value) {
+                showToast('Passwords do not match', 'error');
+                return;
+            }
+            
+            try {
+                // Reauthenticate user
+                const credential = firebase.auth.EmailAuthProvider.credential(
+                    user.email, 
+                    currentPassword.value
+                );
+                
+                await user.reauthenticateWithCredential(credential);
+                
+                // Update password
+                await user.updatePassword(newPassword.value);
+                
+                // Update last changed timestamp in Firestore
+                await db.collection('users').doc(user.uid).set({
+                    passwordLastChanged: new Date()
+                }, { merge: true });
+                
+                // Add to security activity
+                await db.collection('users').doc(user.uid).update({
+                    securityActivity: firebase.firestore.FieldValue.arrayUnion({
+                        title: 'Password changed',
+                        description: 'Your password was successfully updated',
+                        type: 'success',
+                        icon: 'fas fa-lock',
+                        timestamp: new Date()
+                    })
+                });
+                
+                // Reload user data
+                loadUserData(user);
+                
+                // Reset form and close modal
+                changePasswordForm.reset();
+                changePasswordModal.classList.add('hidden');
+                
+                showToast('Password changed successfully');
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showToast('Error changing password. ' + error.message, 'error');
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut().then(() => {
+                window.location.href = 'auth.html';
+            }).catch(error => {
+                console.error('Error signing out:', error);
+                showToast('Error signing out', 'error');
+            });
+        });
+
+        // Listen for auth state changes
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in
+                loadUserData(user);
+                
+                // Check for email verification
+                if (user.emailVerified) {
+                    verificationStatus.innerHTML = `
+                        <span class="verification-badge verified">
+                            <i class="fas fa-check-circle mr-1"></i> Verified
+                        </span>
+                    `;
+                    emailVerificationText.textContent = 'Your email is verified';
+                    verifyEmailBtn.classList.add('hidden');
+                }
+            } else {
+                // User is signed out
+                window.location.href = 'auth.html';
+            }
+        });
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = auth.currentUser;
+            if (user) {
+                loadUserData(user);
+            }
+        });
+    </script>
+</body>
+</html>
