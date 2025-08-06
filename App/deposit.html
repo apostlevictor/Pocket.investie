@@ -249,7 +249,7 @@
                     <button id="closeSuccessModal" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition duration-300">
                         Continue
                     </button>
-                    <a href="investments.html" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-center transition duration-300">
+                    <a href="invest.html" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-center transition duration-300">
                         Invest Now
                     </a>
                 </div>
@@ -285,7 +285,7 @@
                     <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
                     <ul class="space-y-2">
                         <li><a href="dashboard.html" class="text-gray-400 hover:text-white">Dashboard</a></li>
-                        <li><a href="investments.html" class="text-gray-400 hover:text-white">Investments</a></li>
+                        <li><a href="invest.html" class="text-gray-400 hover:text-white">Investments</a></li>
                         <li><a href="transactions.html" class="text-gray-400 hover:text-white">Transactions</a></li>
                         <li><a href="withdraw.html" class="text-gray-400 hover:text-white">Withdraw Funds</a></li>
                     </ul>
@@ -527,7 +527,7 @@
         // Sign out function
         function signOut() {
             auth.signOut().then(() => {
-                window.location.href = 'index.html';
+                window.location.href = 'auth.html';
             }).catch(error => {
                 console.error("Sign out error: ", error);
             });
