@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket Investie - Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <style>
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .user-row:hover {
+            background-color: #f9fafb;
+        }
+        .plan-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+        }
+        .bronze-badge {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .silver-badge {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .gold-badge {
+            background-color: #fef9c3;
+            color: #854d0e;
+        }
+        .platinum-badge {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        .status-active {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .status-pending {
+            background-color: #fffbeb;
+            color: #854d0e;
+        }
+        .status-inactive {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        .chart-container {
+            height: 300px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Login Screen -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-800">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="flex items-center justify-center mb-4">
+                    <i class="fas fa-chart-line text-blue-600 text-4xl"></i>
+                    <span class="ml-2 text-2xl font-bold text-gray-800">Pocket Investie</span>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+                <p class="text-gray-600 mt-2">Sign in to manage your platform</p>
+            </div>
+            
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="email" name="email" 
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                           placeholder="admin@example.com" required
+                           value="useradmin@pocketinvestie.com">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="password" name="password" 
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                           placeholder="••••••••" required
+                           value="2347062791952_@dmin">
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <label for="remember-me" class="ml-2 block text-sm text-gray-700">Remember me</label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300">
+                    Sign In
+                </button>
+                
+                <div id="login-error" class="text-red-500 text-sm mt-2 text-center hidden">
+                    Invalid credentials. Please try again.
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="hidden min-h-screen">
+        <!-- Top Navigation -->
+        <nav class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <button id="sidebar-toggle" class="text-gray-500 mr-4 md:hidden">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <div class="flex-shrink-0 flex items-center">
+                            <i class="fas fa-chart-line text-blue-600 text-2xl mr-2"></i>
+                            <span class="text-xl font-bold text-gray-900">Pocket Investie Admin</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="ml-3 relative">
+                            <div class="flex items-center">
+                                <div class="text-right mr-3 hidden md:block">
+                                    <div class="font-medium text-gray-900">Admin User</div>
+                                    <div class="text-sm text-gray-500">Administrator</div>
+                                </div>
+                                <button id="user-menu-button" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <img class="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Admin profile">
+                                </button>
+                            </div>
+                            <div id="user-menu" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                                <a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="flex">
+            <!-- Sidebar -->
+            <div id="sidebar" class="sidebar bg-white w-64 min-h-screen shadow-md fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition duration-300 z-10">
+                <div class="p-4">
+                    <div class="text-xl font-bold text-gray-800 mb-6 mt-4 pl-3">Dashboard</div>
+                    <nav>
+                        <ul class="space-y-1">
+                            <li>
+                                <a href="#" class="flex items-center px-4 py-3 text-gray-700 bg-blue-50 border-l-4 border-blue-600">
+                                    <i class="fas fa-home mr-3 text-blue-600"></i>
+                                    <span>Overview</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-users mr-3"></i>
+                                    <span>Users</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-chart-bar mr-3"></i>
+                                    <span>Analytics</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-wallet mr-3"></i>
+                                    <span>Transactions</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-cog mr-3"></i>
+                                    <span>Settings</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <div class="px-4">
+                            <div class="text-xs uppercase text-gray-500 font-medium mb-3">Support</div>
+                            <a href="#" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-question-circle mr-3"></i>
+                                <span>Help Center</span>
+                            </a>
+                            <a href="#" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-book mr-3"></i>
+                                <span>Documentation</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="flex-1 p-6 md:p-8 bg-gray-50 min-h-screen">
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
+                    <p class="text-gray-600">Welcome back, Admin. Here's what's happening with your platform today.</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="dashboard-card bg-white p-6 rounded-xl shadow-md transition duration-300">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="text-gray-500 text-sm font-medium">Total Users</div>
+                                <div class="text-3xl font-bold mt-1" id="total-users">1,542</div>
+                            </div>
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <i class="fas fa-users text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center text-green-500 text-sm">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <span>12.3% since last week</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card bg-white p-6 rounded-xl shadow-md transition duration-300">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="text-gray-500 text-sm font-medium">Active Users</div>
+                                <div class="text-3xl font-bold mt-1" id="active-users">1,284</div>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <i class="fas fa-user-check text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center text-green-500 text-sm">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <span>8.7% since last week</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card bg-white p-6 rounded-xl shadow-md transition duration-300">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="text-gray-500 text-sm font-medium">Total Investments</div>
+                                <div class="text-3xl font-bold mt-1" id="total-investments">₦42.8M</div>
+                            </div>
+                            <div class="bg-purple-100 p-3 rounded-full">
+                                <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center text-green-500 text-sm">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <span>21.4% since last week</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card bg-white p-6 rounded-xl shadow-md transition duration-300">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="text-gray-500 text-sm font-medium">Avg. ROI</div>
+                                <div class="text-3xl font-bold mt-1" id="avg-roi">48.2%</div>
+                            </div>
+                            <div class="bg-amber-100 p-3 rounded-full">
+                                <i class="fas fa-percent text-amber-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center text-red-500 text-sm">
+                                <i class="fas fa-arrow-down mr-1"></i>
+                                <span>1.3% since last week</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and User Table -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- User Growth Chart -->
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-bold text-gray-800">User Growth</h2>
+                            <div class="relative">
+                                <select class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2">
+                                    <option selected>Last 7 days</option>
+                                    <option>Last 30 days</option>
+                                    <option>Last 90 days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="userGrowthChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Investment Distribution -->
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-bold text-gray-800">Investment Distribution</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="investmentDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management Section -->
+                <div class="bg-white rounded-xl shadow-md">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-lg font-bold text-gray-800">User Management</h2>
+                            <div class="flex space-x-3">
+                                <div class="relative">
+                                    <input type="text" placeholder="Search users..." class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 pl-10 w-64">
+                                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                </div>
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                                    <i class="fas fa-plus mr-2"></i> New User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Investment</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- User data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-gray-700">
+                                Showing <span id="start-record">1</span> to <span id="end-record">10</span> of <span id="total-records">1,542</span> entries
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm">
+                                    Previous
+                                </button>
+                                 <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                    1
+                                </button>
+                                <button class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm">
+                                    2
+                                </button>
+                                <button class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm">
+                                    3
+                                </button>
+                                <button class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm">
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Configuration -->
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
+            authDomain: "pocket-investie.firebaseapp.com",
+            projectId: "pocket-investie",
+            storageBucket: "pocket-investie.firebasestorage.app",
+            messagingSenderId: "246875262393",
+            appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const dashboard = document.getElementById('dashboard');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const logoutBtn = document.getElementById('logout-btn');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userMenu = document.getElementById('user-menu');
+        const usersTableBody = document.getElementById('users-table-body');
+
+        // Toggle sidebar on mobile
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Toggle user menu
+        userMenuButton.addEventListener('click', () => {
+            userMenu.classList.toggle('hidden');
+        });
+
+        // Close user menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userMenuButton.contains(e.target) && !userMenu.contains(e.target)) {
+                userMenu.classList.add('hidden');
+            }
+        });
+
+        // Login form submission
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // Simulate authentication (in real app, use Firebase auth)
+            if (email === 'useradmin@pocketinvestie.com' && password === '2347062791952_@dmin') {
+                // Hide login, show dashboard
+                loginScreen.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                
+                // Load user data
+                loadUserData();
+            } else {
+                loginError.classList.remove('hidden');
+            }
+        });
+
+        // Logout functionality
+        logoutBtn.addEventListener('click', () => {
+            // Simulate logout
+            loginScreen.classList.remove('hidden');
+            dashboard.classList.add('hidden');
+            loginError.classList.add('hidden');
+        });
+
+        // Sample user data (in real app, fetch from Firestore)
+        const users = [
+            { id: 1, name: "John Doe", email: "john@example.com", phone: "+2348012345678", plan: "Gold", investment: "₦2,500,000", status: "Active", lastActive: "2 hours ago" },
+            { id: 2, name: "Jane Smith", email: "jane@example.com", phone: "+2348098765432", plan: "Platinum", investment: "₦8,000,000", status: "Active", lastActive: "5 hours ago" },
+            { id: 3, name: "Robert Johnson", email: "robert@example.com", phone: "+2348055512345", plan: "Silver", investment: "₦750,000", status: "Pending", lastActive: "1 day ago" },
+            { id: 4, name: "Emily Davis", email: "emily@example.com", phone: "+2348033345678", plan: "Bronze", investment: "₦150,000", status: "Active", lastActive: "3 hours ago" },
+            { id: 5, name: "Michael Wilson", email: "michael@example.com", phone: "+2348077788899", plan: "Gold", investment: "₦3,200,000", status: "Inactive", lastActive: "1 week ago" },
+            { id: 6, name: "Sarah Brown", email: "sarah@example.com", phone: "+2348022233344", plan: "Bronze", investment: "₦50,000", status: "Active", lastActive: "10 minutes ago" },
+            { id: 7, name: "David Taylor", email: "david@example.com", phone: "+2348066677788", plan: "Silver", investment: "₦1,500,000", status: "Active", lastActive: "1 hour ago" },
+            { id: 8, name: "Olivia Martinez", email: "olivia@example.com", phone: "+2348044455566", plan: "Platinum", investment: "₦6,500,000", status: "Pending", lastActive: "2 days ago" },
+            { id: 9, name: "James Anderson", email: "james@example.com", phone: "+2348099988877", plan: "Gold", investment: "₦4,000,000", status: "Active", lastActive: "30 minutes ago" },
+            { id: 10, name: "Sophia Thomas", email: "sophia@example.com", phone: "+2348011122233", plan: "Bronze", investment: "₦100,000", status: "Inactive", lastActive: "2 weeks ago" }
+        ];
+
+        // Function to load user data into table
+        function loadUserData() {
+            usersTableBody.innerHTML = '';
+            
+            users.forEach(user => {
+                let statusClass, planClass;
+                
+                // Determine status class
+                if (user.status === "Active") {
+                    statusClass = "status-active";
+                } else if (user.status === "Pending") {
+                    statusClass = "status-pending";
+                } else {
+                    statusClass = "status-inactive";
+                }
+                
+                // Determine plan class
+                if (user.plan === "Bronze") {
+                    planClass = "bronze-badge";
+                } else if (user.plan === "Silver") {
+                    planClass = "silver-badge";
+                } else if (user.plan === "Gold") {
+                    planClass = "gold-badge";
+                } else {
+                    planClass = "platinum-badge";
+                }
+                
+                const row = document.createElement('tr');
+                row.className = "user-row hover:bg-gray-50 cursor-pointer";
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <img class="h-10 w-10 rounded-full" src="https://i.pravatar.cc/150?u=${user.email}" alt="${user.name}">
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${user.name}</div>
+                                <div class="text-sm text-gray-500">${user.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="plan-badge ${planClass}">${user.plan}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                        ${user.investment}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                            ${user.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${user.lastActive}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button class="text-blue-600 hover:text-blue-900 mr-3">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-green-600 hover:text-green-900">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                `;
+                usersTableBody.appendChild(row);
+            });
+        }
+
+        // Initialize charts (simplified for demo)
+        window.addEventListener('load', () => {
+            // User Growth Chart
+            const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+            new Chart(userGrowthCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                    datasets: [{
+                        label: 'New Users',
+                        data: [120, 190, 170, 220, 300, 280, 350],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Investment Distribution Chart
+              const investmentCtx = document.getElementById('investmentDistributionChart').getContext('2d');
+            new Chart(investmentCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Bronze', 'Silver', 'Gold', 'Platinum'],
+                    datasets: [{
+                        data: [35, 25, 20, 20],
+                        backgroundColor: [
+                            '#cd7f32',
+                            '#c0c0c0',
+                            '#ffd700',
+                            '#e5e4e2'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
