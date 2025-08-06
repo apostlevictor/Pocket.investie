@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposit Funds - Pocket Investie</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #2a4d69);
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .transaction-success {
+            animation: success-pulse 2s ease-in-out;
+        }
+        @keyframes success-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .progress-bar {
+            height: 6px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-chart-line text-blue-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-900">Pocket Investie</span>
+                    </div>
+                </div>
+                <div class="hidden md:ml-6 md:flex md:items-center space-x-8">
+                    <a href="dashboard.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Dashboard</a>
+                    <a href="investments.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Investments</a>
+                    <a href="transactions.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">Transactions</a>
+                    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Deposit Section -->
+    <section class="py-12">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-10">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Deposit Funds</h1>
+                <p class="text-gray-600">Add funds to your wallet securely with Paystack</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Deposit Form -->
+                <div class="bg-white card-shadow rounded-xl p-6">
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-medium text-gray-700">Amount (₦)</label>
+                            <span class="text-xs text-gray-500">Min: ₦2,000</span>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">₦</span>
+                            </div>
+                            <input type="number" id="depositAmount" class="block w-full pl-7 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Enter amount" min="2000" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-blue-100 rounded-lg p-2">
+                                        <i class="fab fa-cc-mastercard text-blue-600 text-xl"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-sm font-medium text-gray-900">Paystack Payment Gateway</h3>
+                                    <p class="text-xs text-gray-500">Secure payments with cards, bank transfer, USSD</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Current Wallet Balance</label>
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">Available Balance</p>
+                                    <h3 class="text-xl font-bold" id="walletBalance">₦0.00</h3>
+                                </div>
+                                <div class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
+                                    SECURED
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="depositBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-300">
+                        Proceed to Payment
+                    </button>
+                </div>
+
+                <!-- Transaction Guide -->
+                <div>
+                    <div class="bg-white card-shadow rounded-xl p-6 mb-6">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">Deposit Process</h2>
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 bg-blue-100 rounded-full w-8 h-8 flex items-center justify-center">
+                                    <span class="text-blue-800 font-bold">1</span>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-sm font-medium text-gray-900">Enter Deposit Amount</h3>
+                                    <p class="text-xs text-gray-500 mt-1">Minimum deposit is ₦2,000</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 bg-blue-100 rounded-full w-8 h-8 flex items-center justify-center">
+                                    <span class="text-blue-800 font-bold">2</span>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-sm font-medium text-gray-900">Complete Payment</h3>
+                                    <p class="text-xs text-gray-500 mt-1">You'll be redirected to Paystack's secure payment page</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 bg-blue-100 rounded-full w-8 h-8 flex items-center justify-center">
+                                    <span class="text-blue-800 font-bold">3</span>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-sm font-medium text-gray-900">Wallet Updated Instantly</h3>
+                                    <p class="text-xs text-gray-500 mt-1">Your wallet balance will be updated immediately after successful payment</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-5">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-circle text-yellow-500 text-xl"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-yellow-800">Important Notice</h3>
+                                <div class="mt-2 text-sm text-yellow-700">
+                                    <p>• Deposits are processed instantly through Paystack</p>
+                                    <p>• A minimum of ₦2,000 is required for deposits</p>
+                                    <p>• Your wallet balance updates immediately after payment confirmation</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Transactions -->
+    <section class="py-10 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Recent Transactions</h2>
+                <a href="transactions.html" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View All</a>
+            </div>
+            
+            <div class="bg-white card-shadow rounded-xl overflow-hidden">
+                <div id="transactionsList" class="divide-y divide-gray-200">
+                    <!-- Transactions will be loaded here dynamically -->
+                    <div class="p-4 text-center text-gray-500">
+                        <i class="fas fa-spinner fa-spin text-blue-500 mr-2"></i>
+                        Loading transactions...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Payment Processing Modal -->
+    <div id="paymentProcessingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-lock text-blue-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Processing Payment</h3>
+                <p class="text-gray-600 mb-6">Redirecting to Paystack secure payment gateway</p>
+                
+                <div class="progress-bar mb-6">
+                    <div class="progress-fill" id="paymentProgress"></div>
+                </div>
+                
+                <p class="text-xs text-gray-500">
+                    <i class="fas fa-shield-alt text-green-500 mr-1"></i>
+                    Secured by Paystack & Pocket Investie
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Success Modal -->
+    <div id="paymentSuccessModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md transaction-success">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Payment Successful!</h3>
+                <p class="text-gray-600 mb-4">Your deposit has been processed successfully</p>
+                
+                <div class="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">Amount:</span>
+                        <span class="font-medium" id="successAmount">₦0.00</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">Transaction ID:</span>
+                        <span class="font-medium text-sm" id="successRef">N/A</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">New Balance:</span>
+                        <span class="font-medium" id="successBalance">₦0.00</span>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button id="closeSuccessModal" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition duration-300">
+                        Continue
+                    </button>
+                    <a href="investments.html" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-center transition duration-300">
+                        Invest Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-chart-line text-blue-400 mr-2"></i>
+                        Pocket Investie
+                    </h3>
+                    <p class="text-gray-400">"Invest Smart, Grow Your Wealth" - A secure Naira-based investment platform.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Support</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope text-blue-400 mr-2"></i>
+                            <a href="mailto:victorexbinarysignalbot@gmail.com" class="text-gray-400 hover:text-white">victorexbinarysignalbot@gmail.com</a>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone text-blue-400 mr-2"></i>
+                            <a href="tel:+2347062791952" class="text-gray-400 hover:text-white">+234 706 279 1952</a>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="dashboard.html" class="text-gray-400 hover:text-white">Dashboard</a></li>
+                        <li><a href="investments.html" class="text-gray-400 hover:text-white">Investments</a></li>
+                        <li><a href="transactions.html" class="text-gray-400 hover:text-white">Transactions</a></li>
+                        <li><a href="withdraw.html" class="text-gray-400 hover:text-white">Withdraw Funds</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-10 pt-6 text-center text-gray-400 text-sm">
+                <p>© 2025 Pocket Investie. Developed and managed by Victorex Binary Option Traders. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Paystack Inline Script -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
+            authDomain: "pocket-investie.firebaseapp.com",
+            projectId: "pocket-investie",
+            storageBucket: "pocket-investie.firebasestorage.app",
+            messagingSenderId: "246875262393",
+            appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM elements
+        const depositAmount = document.getElementById('depositAmount');
+        const depositBtn = document.getElementById('depositBtn');
+        const walletBalance = document.getElementById('walletBalance');
+        const transactionsList = document.getElementById('transactionsList');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const paymentProcessingModal = document.getElementById('paymentProcessingModal');
+        const paymentProgress = document.getElementById('paymentProgress');
+        const paymentSuccessModal = document.getElementById('paymentSuccessModal');
+        const successAmount = document.getElementById('successAmount');
+        const successRef = document.getElementById('successRef');
+        const successBalance = document.getElementById('successBalance');
+        const closeSuccessModal = document.getElementById('closeSuccessModal');
+
+        // Current user data
+        let currentUser = null;
+        let userData = null;
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check auth state
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    loadUserData();
+                    loadRecentTransactions();
+                } else {
+                    // Redirect to login if not authenticated
+                    window.location.href = 'auth.html';
+                }
+            });
+
+            // Event listeners
+            depositBtn.addEventListener('click', processDeposit);
+            logoutBtn.addEventListener('click', signOut);
+            closeSuccessModal.addEventListener('click', () => {
+                paymentSuccessModal.classList.add('hidden');
+            });
+        });
+
+        // Load user data from Firestore
+        function loadUserData() {
+            db.collection("users").doc(currentUser.uid).onSnapshot(doc => {
+                if (doc.exists) {
+                    userData = doc.data();
+                    // Update wallet balance
+                    walletBalance.textContent = `₦${userData.walletBalance?.toLocaleString() || '0.00'}`;
+                } else {
+                    console.log("No user data found");
+                }
+            });
+        }
+
+        // Load recent transactions
+        function loadRecentTransactions() {
+            transactionsList.innerHTML = '<div class="p-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-blue-500 mr-2"></i> Loading transactions...</div>';
+            
+            db.collection("transactions")
+                .where("userId", "==", currentUser.uid)
+                .orderBy("timestamp", "desc")
+                .limit(5)
+                .get()
+                .then(querySnapshot => {
+                    if (querySnapshot.empty) {
+                        transactionsList.innerHTML = '<div class="p-8 text-center"><i class="fas fa-exchange-alt text-gray-300 text-3xl mb-3"></i><p class="text-gray-500">No transactions found</p></div>';
+                        return;
+                    }
+                    let transactionsHtml = '';
+                    querySnapshot.forEach(doc => {
+                        const transaction = doc.data();
+                        transactionsHtml += createTransactionHtml(transaction);
+                    });
+                    
+                    transactionsList.innerHTML = transactionsHtml;
+                })
+                .catch(error => {
+                    console.error("Error loading transactions: ", error);
+                    transactionsList.innerHTML = '<div class="p-4 text-center text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i> Failed to load transactions</div>';
+                });
+        }
+
+        // Create HTML for a transaction item
+        function createTransactionHtml(transaction) {
+            const isDeposit = transaction.type === 'deposit';
+            const amountClass = isDeposit ? 'text-green-600' : 'text-red-600';
+            const icon = isDeposit ? 'arrow-down' : 'arrow-up';
+            const iconBg = isDeposit ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600';
+            const date = transaction.timestamp?.toDate().toLocaleDateString() || 'N/A';
+            
+            return `
+                <div class="p-4 hover:bg-gray-50 transition duration-150">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="${iconBg} rounded-lg p-2">
+                                <i class="fas fa-${icon}"></i>
+                            </div>
+                        </div>
+                        <div class="ml-4 flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">${transaction.description || 'Wallet Transaction'}</p>
+                            <p class="text-xs text-gray-500">${date} • Ref: ${transaction.reference || 'N/A'}</p>
+                        </div>
+                        <div class="ml-4">
+                            <span class="${amountClass} font-medium">${isDeposit ? '+' : '-'}₦${transaction.amount?.toLocaleString() || '0.00'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Process deposit with Paystack
+        function processDeposit() {
+            const amount = parseInt(depositAmount.value);
+            
+            // Validate amount
+            if (!amount || amount < 2000) {
+                alert('Please enter a valid amount. Minimum deposit is ₦2,000.');
+                return;
+            }
+            
+            // Show processing modal
+            paymentProcessingModal.classList.remove('hidden');
+            
+            // Simulate progress animation
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                paymentProgress.style.width = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    initiatePaystackPayment(amount);
+                }
+            }, 100);
+        }
+
+        // Initiate Paystack payment
+        function initiatePaystackPayment(amount) {
+            // Paystack integration
+            const handler = PaystackPop.setup({
+                key: 'pk_live_d99488acf1205e97b3cfb64588f262d0d6ca3c9d', // Replace with your Paystack public key
+                email: currentUser.email,
+                amount: amount * 100, // Amount in kobo
+                currency: 'NGN',
+                ref: 'PI-' + Date.now(), // Generate a unique reference
+                callback: function(response) {
+                    // Payment successful - update Firestore
+                    handleSuccessfulPayment(amount, response.reference);
+                },
+                onClose: function() {
+                    // Handle modal close
+                    paymentProcessingModal.classList.add('hidden');
+                    alert('Payment was not completed. You closed the payment window.');
+                }
+            });
+            
+            handler.openIframe();
+        }
+
+        // Handle successful payment
+        function handleSuccessfulPayment(amount, reference) {
+            // Hide processing modal
+            paymentProcessingModal.classList.add('hidden');
+            
+            // Create transaction record
+            const transactionData = {
+                userId: currentUser.uid,
+                type: 'deposit',
+                amount: amount,
+                description: 'Wallet Deposit',
+                reference: reference,
+                status: 'completed',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            // Update user wallet balance
+            const newBalance = (userData.walletBalance || 0) + amount;
+            
+            // Batch write for both operations
+            const batch = db.batch();
+            
+            // Add transaction
+            const transactionRef = db.collection('transactions').doc();
+            batch.set(transactionRef, transactionData);
+            
+            // Update user wallet
+            const userRef = db.collection('users').doc(currentUser.uid);
+            batch.update(userRef, {
+                walletBalance: newBalance
+            });
+            
+            // Commit batch
+            batch.commit()
+                .then(() => {
+                    // Show success modal
+                    successAmount.textContent = `₦${amount.toLocaleString()}`;
+                    successRef.textContent = reference;
+                    successBalance.textContent = `₦${newBalance.toLocaleString()}`;
+                    paymentSuccessModal.classList.remove('hidden');
+                    
+                    // Reload recent transactions
+                    loadRecentTransactions();
+                })
+                .catch(error => {
+                    console.error("Error updating wallet: ", error);
+                    alert('An error occurred while updating your wallet. Please contact support.');
+                });
+        }
+
+        // Sign out function
+        function signOut() {
+            auth.signOut().then(() => {
+                window.location.href = 'index.html';
+            }).catch(error => {
+                console.error("Sign out error: ", error);
+            });
+        }
+    </script>
+</body>
+</html>
