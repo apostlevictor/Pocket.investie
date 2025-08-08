@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket-Investie Admin Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <style>
+        :root {
+            --primary: #1a56db;
+            --secondary: #1e429f;
+            --success: #0e9f6e;
+            --danger: #e02424;
+            --warning: #f05252;
+            --info: #3f83f8;
+            --dark: #1a202c;
+            --light: #f7fafc;
+            --sidebar: #1a202c;
+            --header: #2d3748;
+            --card: #fff;
+            --text: #2d3748;
+            --text-light: #718096;
+            --border: #e2e8f0;
+            --shadow: rgba(0, 0, 0, 0.05);
+            --sidebar-width: 260px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background-color: #f0f5ff;
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+        }
+        
+        /* Login Page */
+        .login-container {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+        }
+        
+        .login-left {
+            flex: 1;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-left::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+        }
+        
+        .login-left h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .login-left p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            line-height: 1.6;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .login-right {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            background-color: var(--light);
+        }
+        
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .login-form h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.2);
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary);
+        }
+        
+        .login-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .login-logo i {
+            font-size: 3rem;
+            color: var(--primary);
+            background: rgba(26, 86, 219, 0.1);
+            padding: 1.5rem;
+            border-radius: 50%;
+        }
+        
+        /* Admin Dashboard */
+        .admin-container {
+            display: none;
+            width: 100%;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar);
+            color: white;
+            min-height: 100vh;
+            transition: all 0.3s;
+            position: fixed;
+            z-index: 100;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar-header h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+            margin-left: 10px;
+        }
+        
+        .sidebar-header i {
+            color: var(--success);
+            font-size: 1.8rem;
+        }
+        
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+        
+        .menu-item {
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .menu-item:hover, .menu-item.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid var(--success);
+        }
+        
+        .menu-item i {
+            margin-right: 1rem;
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .header-left h1 {
+            font-size: 1.8rem;
+            color: var(--dark);
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+        
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            margin-left: 1.5rem;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        /* Stats Cards */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background-color: var(--card);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
+            border-left: 4px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: var(--primary);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card.blue {
+            border-left-color: var(--primary);
+        }
+        
+        .stat-card.green {
+            border-left-color: var(--success);
+        }
+        
+        .stat-card.purple {
+            border-left-color: var(--secondary);
+        }
+        
+        .stat-card.red {
+            border-left-color: var(--danger);
+        }
+        
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .stat-icon.blue {
+            background-color: rgba(26, 86, 219, 0.1);
+            color: var(--primary);
+        }
+        
+        .stat-icon.green {
+            background-color: rgba(14, 159, 110, 0.1);
+            color: var(--success);
+        }
+        
+        .stat-icon.purple {
+            background-color: rgba(30, 66, 159, 0.1);
+            color: var(--secondary);
+        }
+        
+        .stat-icon.red {
+            background-color: rgba(224, 36, 36, 0.1);
+            color: var(--danger);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-title {
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+        
+        /* Tables */
+        .table-container {
+            background-color: var(--card);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .table-header h3 {
+            font-size: 1.25rem;
+            color: var(--dark);
+        }
+        
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--light);
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #0d8a60;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            font-weight: 600;
+            color: var(--dark);
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .status-pending {
+            background-color: rgba(240, 82, 82, 0.1);
+            color: var(--warning);
+        }
+        
+        .status-approved {
+            background-color: rgba(14, 159, 110, 0.1);
+            color: var(--success);
+        }
+        
+        .status-rejected {
+            background-color: rgba(224, 36, 36, 0.1);
+            color: var(--danger);
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin: 0 0.25rem;
+            color: var(--text-light);
+            transition: color 0.3s;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-btn:hover {
+            background-color: rgba(26, 86, 219, 0.1);
+            color: var(--primary);
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            position: relative;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            font-size: 1.25rem;
+            color: var(--dark);
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+        
+        /* Form in modal */
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .form-col {
+            flex: 1;
+        }
+        
+        /* Bank details */
+        .bank-details {
+            background-color: #f7fafc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 1px solid var(--border);
+        }
+        
+        .bank-details h4 {
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .login-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar .menu-text {
+                display: none;
+            }
+            
+            .sidebar-header h3 {
+                display: none;
+            }
+            
+            .sidebar-header {
+                text-align: center;
+                padding: 1rem 0.5rem;
+                justify-content: center;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .admin-profile .admin-name {
+                display: none;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            z-index: 10000;
+            transform: translateX(120%);
+            transition: transform 0.3s ease-out;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background-color: var(--success);
+        }
+        
+        .notification.error {
+            background-color: var(--danger);
+        }
+        
+        .notification i {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+        
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-left">
+            <h1>Pocket-Investie</h1>
+            <p>Secure Naira-based investment platform developed and managed by Victorex Binary Option Traders</p>
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; min-width: 180px;">
+                    <i class="fas fa-shield-alt" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                    <h3>Secure Platform</h3>
+                </div>
+                <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; min-width: 180px;">
+                    <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                    <h3>Investment Tracking</h3>
+                </div>
+                <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; min-width: 180px;">
+                    <i class="fas fa-shield-alt" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                    <h3>Secure Platform</h3>
+                </div>
+                <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; min-width: 180px;">
+                    <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                    <h3>Investment Tracking</h3>
+                </div>
+                <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; min-width: 180px;">
+                    <i class="fas fa-money-check" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                    <h3>Withdrawal Control</h3>
+                </div>
+            </div>
+        </div>
+        <div class="login-right">
+            <div class="login-form">
+                <div class="login-logo">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h2>Admin Login</h2>
+                <div class="form-group">
+                    <label for="email">Admin Email</label>
+                    <input type="email" id="email" class="form-control" placeholder="admin@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••">
+                </div>
+                <button id="loginBtn" class="btn btn-primary">Sign In</button>
+                <div style="margin-top: 1rem; text-align: center; color: var(--danger); display: none;" id="loginError"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="admin-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-wallet"></i>
+                <h3>Pocket-Investie</h3>
+            </div>
+            <div class="sidebar-menu">
+                <div class="menu-item active" data-page="dashboard">
+                    <i class="fas fa-home"></i>
+                    <span class="menu-text">Dashboard</span>
+                </div>
+                <div class="menu-item" data-page="users">
+                    <i class="fas fa-users"></i>
+                    <span class="menu-text">User Management</span>
+                </div>
+                <div class="menu-item" data-page="investments">
+                    <i class="fas fa-chart-line"></i>
+                    <span class="menu-text">Investments</span>
+                </div>
+                <div class="menu-item" data-page="deposits">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span class="menu-text">Deposits</span>
+                </div>
+                <div class="menu-item" data-page="withdrawals">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span class="menu-text">Withdrawals</span>
+                </div>
+                <div class="menu-item" data-page="transactions">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span class="menu-text">Transactions</span>
+                </div>
+                <div class="menu-item" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span class="menu-text">Settings</span>
+                </div>
+                <div class="menu-item" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="menu-text">Logout</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <h1>Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="admin-profile">
+                        <div class="admin-avatar">AJ</div>
+                        <div class="admin-name">Admin Johnson</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-container">
+                <div class="stat-card blue">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value">₦12,845,000</div>
+                            <div class="stat-title">Total Deposits</div>
+                        </div>
+                        <div class="stat-icon blue">
+                            <i class="fas fa-download"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value">₦8,692,000</div>
+                            <div class="stat-title">Total Withdrawals</div>
+                        </div>
+                        <div class="stat-icon green">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value">2,458</div>
+                            <div class="stat-title">Active Users</div>
+                        </div>
+                        <div class="stat-icon purple">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card red">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value">32</div>
+                            <div class="stat-title">Pending Actions</div>
+                        </div>
+                        <div class="stat-icon red">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <div class="tab active" data-tab="withdrawals">Pending Withdrawals</div>
+                <div class="tab" data-tab="deposits">Pending Deposits</div>
+                <div class="tab" data-tab="users">Recent Users</div>
+            </div>
+
+            <!-- Withdrawals Tab -->
+            <div class="tab-content active" id="withdrawals">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3>Pending Withdrawal Requests</h3>
+                        <div class="table-actions">
+                            <button class="btn-sm btn-outline">Export CSV</button>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Bank Details</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Robert Johnson</td>
+                                <td>₦250,000</td>
+                                <td>Bank Transfer</td>
+                                <td>GTBank •••• 5678</td>
+                                <td>Aug 7, 2023</td>
+                                <td><span class="status-badge status-pending">Pending</span></td>
+                                <td>
+                                    <button class="action-btn" title="Approve" onclick="approveWithdrawal('wd001')"><i class="fas fa-check-circle"></i></button>
+                                    <button class="action-btn" title="Reject" onclick="rejectWithdrawal('wd001')"><i class="fas fa-times-circle"></i></button>
+                                    <button class="action-btn" title="View Details" onclick="viewWithdrawal('wd001')"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Sarah Williams</td>
+                                <td>₦120,000</td>
+                                <td>Bank Transfer</td>
+                                <td>Zenith •••• 1234</td>
+                                <td>Aug 7, 2023</td>
+                                <td><span class="status-badge status-pending">Pending</span></td>
+                                <td>
+                                    <button class="action-btn" title="Approve" onclick="approveWithdrawal('wd002')"><i class="fas fa-check-circle"></i></button>
+                                    <button class="action-btn" title="Reject" onclick="rejectWithdrawal('wd002')"><i class="fas fa-times-circle"></i></button>
+                                    <button class="action-btn" title="View Details" onclick="viewWithdrawal('wd002')"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Michael Brown</td>
+                                <td>₦345,000</td>
+                                <td>Bank Transfer</td>
+                                <td>Access •••• 9012</td>
+                                <td>Aug 6, 2023</td>
+                                <td><span class="status-badge status-pending">Pending</span></td>
+                                <td>
+                                    <button class="action-btn" title="Approve" onclick="approveWithdrawal('wd003')"><i class="fas fa-check-circle"></i></button>
+                                    <button class="action-btn" title="Reject" onclick="rejectWithdrawal('wd003')"><i class="fas fa-times-circle"></i></button>
+                                    <button class="action-btn" title="View Details" onclick="viewWithdrawal('wd003')"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Deposits Tab -->
+            <div class="tab-content" id="deposits">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3>Pending Deposit Requests</h3>
+                        <div class="table-actions">
+                            <button class="btn-sm btn-outline">Export CSV</button>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Emma Wilson</td>
+                                <td>₦100,000</td>
+                                <td>Bank Transfer</td>
+                                <td>Aug 8, 2023</td>
+                                <td><span class="status-badgPlaniumatus-pending">Pending</span></td>
+                                <td>
+                                    <button class="action-btn" title="Approve"><i class="fas fa-check-circle"></i></button>
+                                    <button class="action-btn" title="Reject"><i class="fas fa-times-circle"></i></button>
+                                    <button class="action-btn" title="View Details"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>James Taylor</td>
+                                <td>₦250,000</td>
+                                <td>Card Payment</td>
+                                <td>Aug 8, 2023</td>
+                                <td><span class="status-badge status-pending">Pending</span></td>
+                                <td>
+                                    <button class="action-btn" title="Approve"><i class="fas fa-check-circle"></i></button>
+                                    <button class="action-btn" title="Reject"><i class="fas fa-times-circle"></i></button>
+                                    <button class="action-btn" title="View Details"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div class="tab-content" id="users">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3>Recently Registered Users</h3>
+                        <div class="table-actions">
+                            <button class="btn-sm btn-outline">Export CSV</button>
+                            <button class="btn-sm btn-success">Add User</button>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Joined</th>
+                                <th>Status</th>
+                                <th>Balance</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Olivia Martinez</td>
+                                <td>olivia@example.com</td>
+                                <td>0803 123 4567</td>
+                                <td>Aug 8, 2023</td>
+                                <td><span class="status-badge status-approved">Verified</span></td>
+                                <td>₦500,000</td>
+                                <td>
+                                    <button class="action-btn" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn" title="View"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>William Anderson</td>
+                                <td>william@example.com</td>
+                                <td>0805 987 6543</td>
+                                <td>Aug 7, 2023</td>
+                                <td><span class="status-badge status-pending">Pending</span></td>
+                                <td>₦0</td>
+                                <td>
+                                    <button class="action-btn" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn" title="View"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Activity Logs -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Recent Activity Logs</h3>
+                    <div class="table-actions">
+                        <button class="btn-sm btn-outline">Filter</button>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                            <th>IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Aug 8, 2023 10:25 AM</td>
+                            <td>Robert Johnson</td>
+                            <td>Withdrawal Request</td>
+                            <td>₦250,000 via Bank Transfer</td>
+                            <td>192.168.1.5</td>
+                        </tr>
+                        <tr>
+                            <td>Aug 8, 2023 09:45 AM</td>
+                            <td>Admin Johnson</td>
+                            <td>Approved Deposit</td>
+                            <td>Emma Wilson - ₦100,000</td>
+                            <td>192.168.1.1</td>
+                        </tr>
+                        <tr>
+                            <td>Aug 8, 2025 08:30 AM</td>
+                            <td>Sarah dmsd>
+                            <td>Investmentd>
+                            <td>silver plan - ₦500,000</td>
+                            <td>172.58.22.67</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdrawal Details Modal -->
+    <div id="withdrawalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Withdrawal Details</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label>User</label>
+                            <input type="text" class="form-control" value="Robert Johnson" readonly>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label>Amount</label>
+                            <input type="text" class="form-control" value="₦250,000" readonly>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label>Request Date</label>
+                            <input type="text" class="form-control" value="Aug 7, 2023 10:25 AM" readonly>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label>Status</label>
+                            <input type="text" class="form-control" value="Pending" readonly>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bank-details">
+                    <h4>Bank Account Details</h4>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label>Account Name</label>
+                                <input type="text" class="form-control" value="Robert Johnson" readonly>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                              <label>Account Number</label>
+                                <input type="text" class="form-control" value="0123456789" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label>Bank Name</label>
+                                <input type="text" class="form-control" value="Guaranty Trust Bank (GTB)" readonly>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label>Bank Code</label>
+                                <input type="text" class="form-control" value="058" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Admin Notes</label>
+                    <textarea class="form-control" rows="3" placeholder="Add notes about this withdrawal"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-sm btn-outline">Cancel</button>
+                <button class="btn-sm btn-primary">Save Notes</button>
+                <button class="btn-sm btn-success" id="processWithdrawalBtn">Process Withdrawal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText">Withdrawal processed successfully!</span>
+    </div>
+
+    <script>
+        // Firebase Configuration - Replace with your actual config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
+            authDomain: "pocket-investie.firebaseapp.com",
+            projectId: "pocket-investie",
+            storageBucket: "pocket-investie.firebasestorage.app",
+            messagingSenderId: "246875262393",
+            appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const functions = firebase.functions();
+
+        // DOM Elements
+        const loginPage = document.getElementById('loginPage');
+        const adminDashboard = document.getElementById('adminDashboard');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginError = document.getElementById('loginError');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const menuItems = document.querySelectorAll('.menu-item');
+        const withdrawalModal = document.getElementById('withdrawalModal');
+        const closeModal = document.querySelector('.close-modal');
+        const notification = document.getElementById('notification');
+        const notificationText = document.getElementById('notificationText');
+        const processWithdrawalBtn = document.getElementById('processWithdrawalBtn');
+
+        // Tab Switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Show corresponding content
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Menu Item Switching
+        menuItems.forEach(item => {
+            item.addEventListener('click', function() {
+                if (this.id === 'logoutBtn') return;
+                
+                menuItems.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                const page = this.getAttribute('data-page');
+                // In a real app, you would load the corresponding page content
+                document.querySelector('.header-left h1').textContent = this.querySelector('.menu-text').textContent;
+            });
+        });
+
+        // Modal Handling
+        function openModal() {
+            withdrawalModal.style.display = 'flex';
+        }
+
+        closeModal.addEventListener('click', () => {
+            withdrawalModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === withdrawalModal) {
+                withdrawalModal.style.display = 'none';
+            }
+        });
+
+        // Notification Handling
+        function showNotification(message, isSuccess = true) {
+            notificationText.textContent = message;
+            notification.className = `notification ${isSuccess ? 'success' : 'error'}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Withdrawal Functions
+        function approveWithdrawal(id) {
+            // In real app, you would update Firestore
+            showNotification(`Withdrawal ${id} approved successfully!`);
+        }
+
+        function rejectWithdrawal(id) {
+            // In real app, you would update Firestore
+            showNotification(`Withdrawal ${id} rejected.`, false);
+        }
+
+        function viewWithdrawal(id) {
+            // In real app, you would fetch data from Firestore
+            openModal();
+        }
+
+        // Paystack Integration for Withdrawal Processing
+        function processWithdrawal() {
+            // Show processing state
+            processWithdrawalBtn.innerHTML = '<div class="loading"></div> Processing...';
+            processWithdrawalBtn.disabled = true;
+            
+            // Simulate Paystack API call
+            setTimeout(() => {
+                // This would be replaced with actual Paystack API call
+                // Paystack.transfer({
+                //   amount: 25000000, // in kobo (₦250,000)
+                //   recipient: "RCP_xxxxxxxxxx",
+                //   reason: "Pocket-Investie Withdrawal"
+                // }).then(response => {
+                //   if (response.status) {
+                //     // Update Firestore
+                //     db.collection("withdrawals").doc(id).update({
+                //         status: "completed",
+                //         processedAt: new Date(),
+                //         transactionId: response.data.id
+                //     });
+                
+                showNotification("Withdrawal processed successfully! Funds transferred via Paystack.");
+                withdrawalModal.style.display = 'none';
+                
+                // Reset button
+                processWithdrawalBtn.innerHTML = 'Process Withdrawal';
+                processWithdrawalBtn.disabled = false;
+            }, 2000);
+        }
+
+        // Event Listeners
+        processWithdrawalBtn.addEventListener('click', processWithdrawal);
+
+        // Login Function
+        loginBtn.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            // Simple validation
+            if (!email || !password) {
+                loginError.textContent = 'Please enter both email and password';
+                loginError.style.display = 'block';
+                return;
+            }
+            
+            // Firebase authentication
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Check if user is admin
+                    const user = userCredential.user;
+                    
+                    // In a real app, check Firestore for admin role
+                    db.collection('admins').doc(user.uid).get().then(doc => {
+                        if (doc.exists) {
+                            loginPage.style.display = 'none';
+                            adminDashboard.style.display = 'block';
+                        } else {
+                            loginError.textContent = 'You are not authorized as admin';
+                            loginError.style.display = 'block';
+                            auth.signOut();
+                        }
+                    }).catch(error => {
+                        console.error('Firestore error:', error);
+                        loginError.textContent = 'Error verifying admin status';
+                        loginError.style.display = 'block';
+                    });
+                })
+                .catch((error) => {
+                    console.error('Login error:', error);
+                    loginError.textContent = 'Login failed: ' + error.message;
+                    loginError.style.display = 'block';
+                });
+        });
+
+        // Logout Function
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut().then(() => {
+                adminDashboard.style.display = 'none';
+                loginPage.style.display = 'flex';
+                emailInput.value = '';
+                passwordInput.value = '';
+                loginError.style.display = 'none';
+            });
+        });
+
+        // Check if user is already logged in
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Verify admin role
+                db.collection('admins').doc(user.uid).get().then(doc => {
+                    if (doc.exists) {
+                        loginPage.style.display = 'none';
+                        adminDashboard.style.display = 'block';
+                    } else {
+                        // Not an admin, force logout
+                        auth.signOut();
+                    }
+                });
+            }
+        });
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            // Set current date in dashboard
+            const today = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.querySelector('.header-left h1').textContent = `Dashboard - ${today.toLocaleDateString('en-US', options)}`;
+        });
+    </script>
+</body>
+</html>
