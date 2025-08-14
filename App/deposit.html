@@ -474,64 +474,94 @@
             handler.openIframe();
         }
 
-        // Handle successful payment
-        function handleSuccessfulPayment(amount, reference) {
-            // Hide processing modal
-            paymentProcessingModal.classList.add('hidden');
-            
-            // Create transaction record
-            const transactionData = {
-                userId: currentUser.uid,
-                type: 'deposit',
-                amount: amount,
-                description: 'Wallet Deposit',
-                reference: reference,
-                status: 'completed',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            // Update user wallet balance
-            const newBalance = (userData.walletBalance || 0) + amount;
-            
-            // Batch write for both operations
-            const batch = db.batch();
-            
-            // Add transaction
-            const transactionRef = db.collection('transactions').doc();
-            batch.set(transactionRef, transactionData);
-            
-            // Update user wallet
-            const userRef = db.collection('users').doc(currentUser.uid);
-            batch.update(userRef, {
-                walletBalance: newBalance
-            });
-            
-            // Commit batch
-            batch.commit()
-                .then(() => {
-                    // Show success modal
-                    successAmount.textContent = `₦${amount.toLocaleString()}`;
-                    successRef.textContent = reference;
-                    successBalance.textContent = `₦${newBalance.toLocaleString()}`;
-                    paymentSuccessModal.classList.remove('hidden');
-                    
-                    // Reload recent transactions
-                    loadRecentTransactions();
-                })
-                .catch(error => {
-                    console.error("Error updating wallet: ", error);
-                    alert('An error occurred while updating your wallet. Please contact support.');
-                });
-        }
+        async function handleSuccessfulPayment(intendedAmount, reference) {
+  try {
+    // 1. Verify transaction with Paystack
+    const verifyRes = await fetch(
+      `https://api.paystack.co/transaction/verify/${reference}`,
+      { 
+        headers: { 
+          Authorization: `Bearer ${process.env.REACT_APP_PAYSTACK_SECRET_KEY}` 
+        } 
+      }
+    );
+    
+    const verificationData = await verifyRes.json();
+    
+    // 2. Check verification status
+    if (!verificationData.status || verificationData.data.status !== "success") {
+      throw new Error('Payment verification failed');
+    }
+    
+    // 3. Get actual paid amount (convert kobo to Naira)
+    const actualAmount = verificationData.data.amount / 100;
+    
+    // 4. Validate amount consistency
+    if (Math.abs(actualAmount - intendedAmount) > 1) {
+      throw new Error(`Paid amount (₦${actualAmount}) doesn't match requested amount (₦${intendedAmount})`);
+    }
 
-        // Sign out function
-        function signOut() {
-            auth.signOut().then(() => {
-                window.location.href = 'auth.html';
-            }).catch(error => {
-                console.error("Sign out error: ", error);
-            });
-        }
+    // 5. Create transaction record
+    const transactionData = {
+      userId: currentUser.uid,
+      type: 'deposit',
+      amount: actualAmount,
+      description: 'Wallet Deposit',
+      reference: reference,
+      status: 'completed',
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    // 6. Batch write operations
+    const batch = db.batch();
+    
+    // Add transaction
+    const transactionRef = db.collection('transactions').doc();
+    batch.set(transactionRef, transactionData);
+    
+    // Update user wallet using increment
+    const userRef = db.collection('users').doc(currentUser.uid);
+    batch.update(userRef, {
+      walletBalance: firebase.firestore.FieldValue.increment(actualAmount)
+    });
+
+    // 7. Execute batch write
+    await batch.commit();
+    
+    // 8. Update UI with new balance
+    const userDoc = await userRef.get();
+    const newBalance = userDoc.data().walletBalance;
+    
+    // Show success modal
+    successAmount.textContent = `₦${actualAmount.toLocaleString()}`;
+    successRef.textContent = reference;
+    successBalance.textContent = `₦${newBalance.toLocaleString()}`;
+    paymentSuccessModal.classList.remove('hidden');
+    
+    // 9. Reload transactions
+    loadRecentTransactions();
+    
+  } catch (error) {
+    console.error("Deposit processing error:", error);
+    
+    // Show user-friendly error
+    alert(`Deposit failed: ${error.message}. Please contact support with reference: ${reference}`);
+    
+    // Re-enable payment button
+    document.getElementById('payButton').disabled = false;
+    
+    // Hide processing modal
+    paymentProcessingModal.classList.add('hidden');
+    }           
+  }
+     // sign out function
+       function signOut() {
+           auth.signOut().then(() => {
+               window.location.href = 'auth.html';
+           }).catch(error => {
+               console.error("Sign out error: ", error);
+           });
+       }
     </script>
 </body>
 </html>
