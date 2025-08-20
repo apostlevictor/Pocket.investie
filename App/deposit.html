@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposit Funds - Pocket Investie</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <!-- Paystack Inline JS -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #f39c12;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --gray: #95a5a6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .logo span {
+            color: var(--accent);
+        }
+        
+        .main {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .deposit-section {
+            flex: 7;
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        }
+        
+        .info-section {
+            flex: 5;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .info-box {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        }
+        
+        h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        .input-group span {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+            color: var(--dark);
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 15px 15px 15px 40px;
+            border: 2px solid var(--light);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="number"]:focus {
+            border-color: var(--secondary);
+            outline: none;
+        }
+        
+        .payment-method {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        
+        .payment-method img {
+            height: 30px;
+            margin-right: 10px;
+        }
+        
+        .balance-card {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .balance-amount {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #e67e22;
+        }
+        
+        .btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+        }
+        
+        .process-steps {
+            list-style: none;
+        }
+        
+        .process-steps li {
+            display: flex;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+        
+        .step-number {
+            background: var(--secondary);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .notice {
+            background: #f8f9fa;
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .notice ul {
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+        
+        .notice li {
+            margin-bottom: 8px;
+        }
+        
+        .transactions {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--light);
+        }
+        
+        .transaction-date {
+            color: var(--gray);
+            font-size: 14px;
+        }
+        
+        .transaction-amount {
+            font-weight: 600;
+        }
+        
+        .status-success {
+            color: var(--success);
+        }
+        
+        .status-failed {
+            color: var(--danger);
+        }
+        
+        .status-pending {
+            color: var(--accent);
+        }
+        
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 30px 0;
+            margin-top: 50px;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+            margin-bottom: 20px;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 900px) {
+            .main {
+                flex-direction: column;
+            }
+        }
+        
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--dark);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .toast.success {
+            background: var(--success);
+        }
+        
+        .toast.error {
+            background: var(--danger);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">Pocket <span>Investie</span></div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="main">
+            <div class="deposit-section">
+                <h2>Deposit Funds</h2>
+                
+                <div class="form-group">
+                    <label for="amount">Amount (₦)</label>
+                    <div class="input-group">
+                        <span>₦</span>
+                        <input type="number" id="amount" min="100" placeholder="Enter amount" required>
+                    </div>
+                    <small>Min: ₦100.00</small>
+                </div>
+                
+                <div class="payment-method">
+                    <h3>Payment Method</h3>
+                    <p>Paystack Payment Gateway</p>
+                    <p>Secure payments with cards, bank transfer, USSD</p>
+                </div>
+                
+                <div class="balance-card">
+                    <p>Current Wallet Balance</p>
+                    <p>Available Balance</p>
+                    <div class="balance-amount" id="currentBalance">₦0.00</div>
+                </div>
+                
+                <button id="proceedBtn" class="btn">
+                    <span>Proceed to Payment</span>
+                    <div class="loader" id="btnLoader"></div>
+                </button>
+                
+                <div class="notice">
+                    <h3>Important Notice</h3>
+                    <ul>
+                        <li>Deposits are processed instantly through Paystack</li>
+                        <li>A minimum of ₦100.00 is required for deposits</li>
+                        <li>Your wallet balance updates immediately after payment confirmation</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <div class="info-box">
+                    <h3>Deposit Process</h3>
+                    <ul class="process-steps">
+                        <li>
+                            <div class="step-number">1</div>
+                            <div>
+                                <strong>Enter Deposit Amount</strong>
+                                <p>Minimum deposit is ₦100</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="step-number">2</div>
+                            <div>
+                                <strong>Complete Payment</strong>
+                                <p>You'll be redirected to Paystack's secure payment page</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="step-number">3</div>
+                            <div>
+                                <strong>Wallet Updated Instantly</strong>
+                                <p>Your wallet balance will be updated immediately after successful payment</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="info-box">
+                    <h3>Recent Transactions</h3>
+                    <div class="transactions" id="transactionsList">
+                        <p>Loading transactions...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Pocket Investie</h3>
+                    <p>"Invest Smart, Grow Your Wealth" - A secure Naira-based investment platform.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <p>pocketinvestie@gmail.com</p>
+                    <p>+44 791 11 24456</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <p>Dashboard</p>
+                    <p>Investments</p>
+                    <p>Transactions</p>
+                    <p>Withdraw Funds</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2025 Pocket Investie. Founded and managed by Victorex Binary Option Traders. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Firebase configuration - replace with your actual config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
+            authDomain: "pocket-investie.firebaseapp.com",
+            projectId: "pocket-investie",
+            storageBucket: "pocket-investie.firebasestorage.app",
+            messagingSenderId: "246875262393",
+            appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        
+        // Paystack public key - replace with your actual key
+        const paystackPublicKey = "pk_live_d99488acf1205e97b3cfb64588f262d0d6ca3c9d";
+        
+        // DOM elements
+        const amountInput = document.getElementById('amount');
+        const proceedBtn = document.getElementById('proceedBtn');
+        const currentBalanceEl = document.getElementById('currentBalance');
+        const transactionsList = document.getElementById('transactionsList');
+        const btnLoader = document.getElementById('btnLoader');
+        const toast = document.getElementById('toast');
+        
+        // Current user data
+        let currentUser = null;
+        let userData = null;
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthState();
+            setupEventListeners();
+        });
+        
+        // Check authentication state
+        function checkAuthState() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    loadUserData();
+                    loadTransactions();
+                } else {
+                    // Redirect to login if not authenticated
+                    window.location.href = 'auth.html';
+                }
+            });
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            proceedBtn.addEventListener('click', initiateDeposit);
+            
+            amountInput.addEventListener('input', function() {
+                if (this.value < 100) {
+                    this.setCustomValidity('Minimum deposit is ₦100');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        }
+        
+        // Load user data from Firestore
+        async function loadUserData() {
+            try {
+                const doc = await db.collection('users').doc(currentUser.uid).get();
+                if (doc.exists) {
+                    userData = doc.data();
+                    currentBalanceEl.textContent = `₦${userData.balance.toLocaleString()}`;
+                } else {
+                    showToast('User data not found', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                showToast('Error loading user data', 'error');
+            }
+        }
+        
+        // Load user transactions
+        async function loadTransactions() {
+            try {
+                const snapshot = await db.collection('transactions')
+                    .where('userId', '==', currentUser.uid)
+                    .where('type', '==', 'deposit')
+                    .orderBy('createdAt', 'desc')
+                    .limit(5)
+                    .get();
+                
+                if (snapshot.empty) {
+                    transactionsList.innerHTML = '<p>No transactions found</p>';
+                    return;
+                }
+                
+                let transactionsHtml = '';
+                snapshot.forEach(doc => {
+                    const transaction = doc.data();
+                    transactionsHtml += `
+                        <div class="transaction-item">
+                            <div>
+                                <div>${transaction.description || 'Deposit'}</div>
+                                <div class="transaction-date">${formatDate(transaction.createdAt.toDate())}</div>
+                            </div>
+                            <div class="transaction-amount ${transaction.status}">₦${transaction.amount.toLocaleString()}</div>
+                        </div>
+                    `;
+                });
+                
+                transactionsList.innerHTML = transactionsHtml;
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                transactionsList.innerHTML = '<p>Failed to load transactions</p>';
+            }
+        }
+        
+        // Initiate deposit process
+        function initiateDeposit() {
+            const amount = parseFloat(amountInput.value);
+            
+            if (!amount || amount < 100) {
+                showToast('Please enter a valid amount (minimum ₦100)', 'error');
+                return;
+            }
+            
+            // Show loading state
+            proceedBtn.disabled = true;
+            btnLoader.style.display = 'block';
+            proceedBtn.querySelector('span').textContent = 'Processing...';
+            
+            // Create transaction record first
+            createTransactionRecord(amount)
+                .then(transactionId => {
+                    // Initialize Paystack payment
+                    const handler = PaystackPop.setup({
+                        key: paystackPublicKey,
+                        email: currentUser.email,
+                        amount: amount * 100, // Convert to kobo
+                        currency: 'NGN',
+                        ref: transactionId, // Use transaction ID as reference
+                        metadata: {
+                            custom_fields: [
+                                {
+                                    display_name: "User ID",
+                                    variable_name: "user_id",
+                                    value: currentUser.uid
+                                }
+                            ]
+                        },
+                        callback: function(response) {
+                            // Payment successful - verify and update transaction
+                            verifyAndUpdateTransaction(transactionId, response.reference, amount);
+                        },
+                        onClose: function() {
+                            // Payment closed
+                            proceedBtn.disabled = false;
+                            btnLoader.style.display = 'none';
+                            proceedBtn.querySelector('span').textContent = 'Proceed to Payment';
+                            
+                            // Check if payment was actually completed (user might have closed after paying)
+                            setTimeout(() => {
+                                checkTransactionStatus(transactionId);
+                            }, 3000);
+                        }
+                    });
+            
