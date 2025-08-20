@@ -616,4 +616,113 @@
                             }, 3000);
                         }
                     });
+                    
+                handler.openIframe();
+                })
+                .catch(error => {
+                    console.error('Error creating transaction record:', error);
+                    showToast('Error initiating deposit. Please try again.', 'error');
+                    proceedBtn.disabled = false;
+                    btnLoader.style.display = 'none';
+                    proceedBtn.querySelector('span').textContent = 'Proceed to Payment';
+                });
+        }
+        
+        // Create a transaction record in Firestore
+        async function createTransactionRecord(amount) {
+            const transactionData = {
+                userId: currentUser.uid,
+                amount: amount,
+                type: 'deposit',
+                status: 'pending',
+                description: `Deposit of ₦${amount.toLocaleString()}`,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
             
+            const docRef = await db.collection('transactions').add(transactionData);
+            return docRef.id;
+        }
+        
+        // Verify payment and update transaction
+        async function verifyAndUpdateTransaction(transactionId, paymentReference, amount) {
+            try {
+                // In a real application, you would verify the payment with your backend
+                // For this example, we'll simulate a successful payment
+                
+                // Update transaction status
+                await db.collection('transactions').doc(transactionId).update({
+                    status: 'success',
+                    paymentReference: paymentReference,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Update user balance
+                const newBalance = userData.balance + amount;
+                await db.collection('users').doc(currentUser.uid).update({
+                    balance: newBalance,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Update UI
+                userData.balance = newBalance;
+                currentBalanceEl.textContent = `₦${newBalance.toLocaleString()}`;
+                
+                // Reload transactions
+                loadTransactions();
+                
+                // Show success message
+                showToast(`Deposit of ₦${amount.toLocaleString()} successful!`, 'success');
+                
+            } catch (error) {
+                console.error('Error updating transaction:', error);
+                
+                // Mark transaction as failed in case of error
+                await db.collection('transactions').doc(transactionId).update({
+                    status: 'failed',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                showToast('Error processing deposit. Please contact support.', 'error');
+            } finally {
+                proceedBtn.disabled = false;
+                btnLoader.style.display = 'none';
+                proceedBtn.querySelector('span').textContent = 'Proceed to Payment';
+            }
+        }
+        
+        // Check transaction status (for cases where payment might have completed but callback didn't fire)
+        async function checkTransactionStatus(transactionId) {
+            try {
+                const doc = await db.collection('transactions').doc(transactionId).get();
+                if (doc.exists && doc.data().status === 'pending') {
+                    // Transaction is still pending, might need to verify with backend
+                    showToast('Payment status unclear. Please check your balance or contact support.', 'error');
+                }
+            } catch (error) {
+                console.error('Error checking transaction status:', error);
+            }
+        }
+        
+        // Utility function to format date
+        function formatDate(date) {
+            return new Intl.DateTimeFormat('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            }).format(date);
+        }
+        
+        // Show toast message
+        function showToast(message, type = '') {
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
