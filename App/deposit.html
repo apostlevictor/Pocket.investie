@@ -5,297 +5,148 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pocket Investie — Deposit</title>
-  <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
   <style>
-    /* Red -> Blue linear gradient background */
-    :root{ --card-bg: rgba(255,255,255,0.96); --glass: rgba(255,255,255,0.06); }
-    html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
-    body{
-      background: linear-gradient(135deg, #ff3d3d 0%, #ff6b6b 28%, #4f46e5 72%, #2563eb 100%);
-      display:flex;align-items:center;justify-content:center;padding:32px;box-sizing:border-box;
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      background: linear-gradient(135deg, #ff3d3d, #2563eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
-    .container{width:100%;max-width:980px;display:grid;grid-template-columns:350px 1fr;gap:28px;align-items:start}
-    .card{
-      background:var(--card-bg);border-radius:16px;padding:22px;box-shadow:0 8px 30px rgba(2,6,23,0.18);backdrop-filter: blur(6px);
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
     }
-    .brand{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(45deg,#fff,#ffffffaa);display:flex;align-items:center;justify-content:center;font-weight:700;color:#111}
-    h1{margin:0;font-size:18px}
-    p.lead{margin:6px 0 18px;color:#333}/* Form */
-.form-row{display:flex;flex-direction:column;gap:8px}
-label{font-size:13px;color:#333;font-weight:600}
-input[type="number"]{appearance: none;padding:12px 14px;border-radius:10px;border:1px solid #e6e6e9;font-size:16px}
-.hint{font-size:13px;color:#666}
-.btn{display:inline-block;padding:12px 16px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
-.btn-primary{background:linear-gradient(90deg,#2563eb,#4f46e5);color:white}
-.btn-ghost{background:transparent;border:1px solid rgba(0,0,0,0.06)}
-
-/* Right column: details & history */
-.side{display:flex;flex-direction:column;gap:18px}
-.balance{font-size:14px;color:#111;font-weight:700}
-.nav-shortcuts{display:flex;gap:8px;flex-wrap:wrap}
-.nav-shortcuts a{padding:8px 10px;border-radius:8px;background:var(--glass);text-decoration:none;color:white;font-weight:600;border:1px solid rgba(255,255,255,0.06)}
-
-.tx-list{max-height:320px;overflow:auto}
-.tx{display:flex;justify-content:space-between;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.04);background:rgba(255,255,255,0.62);margin-bottom:8px}
-
-footer {margin-top:12px;color:#fff;font-size:13px}
-
-@media (max-width:900px){.container{grid-template-columns:1fr;}}
-
+    h1 {
+      font-size: 20px;
+      margin: 0 0 8px 0;
+    }
+    .hint {font-size: 14px;color: #555;}
+    .form-row {margin-top: 16px;display: flex;flex-direction: column;gap: 8px;}
+    label {font-weight: 600;}
+    input[type="number"], input[type="file"] {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(90deg,#2563eb,#4f46e5);
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .nav-shortcuts {margin-top: 16px;display:flex;gap:8px;flex-wrap:wrap}
+    .nav-shortcuts a{padding:8px 10px;border-radius:8px;background:#f0f0f0;text-decoration:none;color:#111;font-weight:600}
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Left: deposit card -->
-    <div class="card">
-      <div class="brand">
-        <div class="logo">PI</div>
-        <div>
-          <h1>Pocket Investie — Deposit</h1>
-          <div class="hint">Secure Naira deposits powered by Paystack</div>
-        </div>
-      </div><p class="lead">Top up your wallet. Minimum deposit: <strong>₦100</strong>. Payments are processed by Paystack — a transaction confirmation will be written to Firebase and your wallet will update in real time.</p>
-
-  <div id="logged-info" class="form-row"></div>
-
-  <div style="margin-top:10px" class="form-row">
-    <label for="amount">Amount (₦)</label>
-    <input id="amount" type="number" min="100" step="1" placeholder="Enter amount in Naira (minimum ₦100)" />
-    <div class="hint">You can deposit any whole Naira value (no decimals). The app will write a transaction to Firestore on success.</div>
-  </div>
-
-  <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
-    <button id="pay-btn" class="btn btn-primary">Pay with Paystack</button>
-    <button id="clear-btn" class="btn btn-ghost" style="color:#111">Clear</button>
-  </div>
-
-  <div id="message" style="margin-top:12px;color:#111;font-weight:600"></div>
-
-  <footer>
-    <div style="font-size:13px">Note: This demo uses client-side confirmation from Paystack's inline handler. For production you <strong>must</strong> implement server-side verification using your Paystack secret key and update Firestore only after verifying the payment reference server-side to prevent fraud.</div>
-  </footer>
+  <div class="card">
+    <h1>Pocket Investie — Deposit</h1>
+    <p class="hint">Transfer to the bank account below and upload your payment receipt. Your deposit will be reviewed and approved by admin before your wallet is updated.</p><div style="margin-top:12px;">
+  <strong>Bank Details:</strong>
+  <p>Bank: palmpay Ltd<br>Account Name: C****** S******   <br>Account Number: <strong>7062791952</strong></p>
 </div>
 
-<!-- Right: quick info -->
-<div class="side">
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <div style="font-size:12px;color:#666">Wallet balance</div>
-        <div id="wallet" class="balance">₦0.00</div>
-      </div>
-      <div>
-        <!-- Short links to other pages -->
-        <div class="nav-shortcuts">
-          <a href="dashboard.html">Dashboard</a>
-          <a href="withdraw.html">Withdraw</a>
-          <a href="profile.html">Profile</a>
-          <a href="transactions.html">Transactions</a>
-          <a href="invest.html">Invest</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3 style="margin-top:0">Recent deposits</h3>
-    <div id="txs" class="tx-list">
-      <div class="hint">No recent deposits</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3 style="margin-top:0">Support</h3>
-    <div class="hint">For problems related to payments, contact your admin or Paystack support. Make sure to implement server-side verification for production.</div>
-  </div>
+<div class="form-row">
+  <label for="amount">Amount (₦)</label>
+  <input id="amount" type="number" min="100" placeholder="Enter amount (min ₦100)" />
 </div>
 
-  </div>  <!-- Paystack inline script -->  <script src="https://js.paystack.co/v1/inline.js"></script>  <!-- Firebase (compat) CDN scripts -->  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>  <script>
-    /*************************************************************************
-     * === IMPORTANT: REPLACE THE PLACEHOLDERS BELOW WITH YOUR LIVE KEYS ===
-     * 1) Replace PAYSTACK_PUBLIC_KEY with your Paystack public key (starts with pk_live_ or pk_test_)
-     * 2) Replace the firebaseConfig object values with your Firebase project's config
-     * 3) Make sure Firestore security rules allow the authenticated user to write their own transactions/wallet,
-     *    or use a Cloud Function to validate and write server-side.
-     *************************************************************************/
+<div class="form-row">
+  <label for="receipt">Upload Payment Receipt</label>
+  <input id="receipt" type="file" accept="image/*" />
+</div>
 
-    const PAYSTACK_PUBLIC_KEY = 'pk_live_d99488acf1205e97b3cfb64588f262d0d6ca3c9d'; // <-- REPLACE
+<div class="form-row">
+  <button id="submit-btn">Submit Deposit</button>
+</div>
 
-    // Firebase configuration - REPLACE with your project's settings
+<div id="message" style="margin-top:12px;color:#111;font-weight:600"></div>
+
+<div class="nav-shortcuts">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="withdraw.html">Withdraw</a>
+  <a href="profile.html">Profile</a>
+  <a href="transactions.html">Transactions</a>
+  <a href="invest.html">Invest</a>
+</div>
+
+  </div>  <!-- Firebase CDN -->  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>  <script>
+    // Replace with your Firebase config
     const firebaseConfig = {
-      apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
-      authDomain: "pocket-investie.firebaseapp.com",
-      projectId: "pocket-investie",
-      storageBucket: "pocket-investie.firebasestorage.app",
-      messagingSenderId: "246875262393",
-      appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
+      apiKey: "FIREBASE_API_KEY",
+      authDomain: "FIREBASE_AUTH_DOMAIN",
+      projectId: "FIREBASE_PROJECT_ID",
+      storageBucket: "FIREBASE_STORAGE_BUCKET",
+      messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID",
+      appId: "FIREBASE_APP_ID"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    const storage = firebase.storage();
 
-    // UI elements
     const amountInput = document.getElementById('amount');
-    const payBtn = document.getElementById('pay-btn');
-    const clearBtn = document.getElementById('clear-btn');
+    const receiptInput = document.getElementById('receipt');
+    const submitBtn = document.getElementById('submit-btn');
     const messageEl = document.getElementById('message');
-    const walletEl = document.getElementById('wallet');
-    const txsEl = document.getElementById('txs');
-    const loggedInfoEl = document.getElementById('logged-info');
-
-    let currentUser = null;
 
     function showMessage(msg, isError=false){
-      messageEl.style.color = isError ? '#b91c1c' : '#064e3b';
+      messageEl.style.color = isError ? 'red' : 'green';
       messageEl.textContent = msg;
     }
 
-    function formatNaira(n){
-      if (typeof n !== 'number') return '₦0.00';
-      return '₦' + n.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
-    }
-
-    // Ensure user is authenticated. If you use a different auth flow (custom token, phone, etc.) adapt this section.
-    auth.onAuthStateChanged(async user => {
-      if (!user) {
-        // Not signed in — prompt for sign in or redirect to login page
-        loggedInfoEl.innerHTML = `<div class="hint">You're not signed in. <a href=\"login.html\">Sign in</a> to deposit.</div>`;
-        currentUser = null;
-        walletEl.textContent = formatNaira(0);
-        txsEl.innerHTML = '<div class="hint">Sign in to see transactions.</div>';
+    auth.onAuthStateChanged(user => {
+      if(!user){
+        showMessage("Please login to deposit.", true);
         return;
       }
+      submitBtn.onclick = async () => {
+        const amount = Number(amountInput.value);
+        const file = receiptInput.files[0];
 
-      currentUser = user; // firebase.User
-      loggedInfoEl.innerHTML = `<div class="hint">Signed in as <strong>${user.email || user.phoneNumber || user.uid}</strong></div>`;
-
-      // Listen to user's wallet in real-time and render changes.
-      const userDocRef = db.collection('users').doc(user.uid);
-
-      userDocRef.onSnapshot(doc => {
-        if (!doc.exists) {
-          walletEl.textContent = formatNaira(0);
+        if(!amount || amount < 100){
+          showMessage("Minimum deposit is ₦100", true);
           return;
         }
-        const data = doc.data();
-        const bal = (data && data.wallet) ? Number(data.wallet) : 0;
-        walletEl.textContent = formatNaira(bal);
-      });
-
-      // Listen to last 10 transactions for this user
-      db.collection('transactions')
-        .where('uid','==', user.uid)
-        .orderBy('createdAt','desc')
-        .limit(10)
-        .onSnapshot(snapshot => {
-          if (snapshot.empty) {
-            txsEl.innerHTML = '<div class="hint">No recent deposits</div>';
-            return;
-          }
-          txsEl.innerHTML = '';
-          snapshot.forEach(doc => {
-            const tx = doc.data();
-            const div = document.createElement('div');
-            div.className = 'tx';
-            div.innerHTML = `<div><div style=\"font-weight:700\">${formatNaira(tx.amount)}</div><div style=\"font-size:12px;color:#555\">${tx.reference || ''}</div></div><div style=\"text-align:right;font-size:12px;color:#111\">${new Date(tx.createdAt?.toMillis ? tx.createdAt.toMillis() : (tx.createdAt||Date.now())).toLocaleString()}<div style=\"font-weight:700;color:${tx.status==='success'? '#064e3b' : '#b91c1c'}\">${tx.status}</div></div>`;
-            txsEl.appendChild(div);
-          });
-        });
-    });
-
-    // Clear button
-    clearBtn.addEventListener('click', e => { amountInput.value = ''; messageEl.textContent = ''; });
-
-    // Pay button handler
-    payBtn.addEventListener('click', async function(){
-      if (!currentUser) {
-        showMessage('You must be signed in to make a deposit. Redirecting to login...', true);
-        setTimeout(()=> window.location.href = 'login.html', 1200);
-        return;
-      }
-
-      const amountVal = Number(amountInput.value);
-      if (!amountVal || isNaN(amountVal) || amountVal < 100){
-        showMessage('Please enter a valid amount. Minimum deposit is ₦100.', true);
-        return;
-      }
-
-      // Prepare metadata
-      const email = currentUser.email || (currentUser.providerData[0] && currentUser.providerData[0].email) || `${currentUser.uid}@no-email.local`;
-      const firstName = currentUser.displayName || '';
-
-      // Amount must be in kobo for Paystack
-      const amountKobo = Math.round(amountVal * 100);
-
-      // Create a provisional transaction in Firestore with status 'initiated' so we have a record even if user closes
-      const txRef = db.collection('transactions').doc();
-      const txData = {
-        uid: currentUser.uid,
-        amount: amountVal,
-        amountKobo: amountKobo,
-        reference: 'init_' + txRef.id,
-        status: 'initiated',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
-
-      await txRef.set(txData);
-
-      // Setup Paystack
-      const handler = PaystackPop.setup({
-        key: PAYSTACK_PUBLIC_KEY, // Replace with your public key
-        email: email,
-        amount: amountKobo,
-        metadata: {
-          custom_fields: [
-            {display_name: "User ID", variable_name: "uid", value: currentUser.uid},
-            {display_name: "Transaction Id", variable_name: "txId", value: txRef.id}
-          ]
-        },
-        currency: 'NGN',
-        channels: ['card','bank','ussd','qr'],
-        callback: async function(response){
-          // response.reference is the Paystack reference
-          showMessage('Payment successful. Finalizing...');
-
-          try{
-            const paystackRef = response.reference;
-            // Update the transaction doc with paystack reference and optimistic 'success' status.
-            await txRef.update({ reference: paystackRef, status: 'success', paystackResponse: response, completedAt: firebase.firestore.FieldValue.serverTimestamp() });
-
-            // IMPORTANT: For production, you MUST verify this reference server-side with your Paystack secret key.
-            // This client-side flow is convenient for demos but is not secure by itself.
-
-            // Atomically increment user's wallet using a transaction to avoid race conditions.
-            const userDocRef = db.collection('users').doc(currentUser.uid);
-            await db.runTransaction(async (t) => {
-              const userDoc = await t.get(userDocRef);
-              const prev = (userDoc.exists && userDoc.data().wallet) ? Number(userDoc.data().wallet) : 0;
-              const updated = prev + Number(amountVal);
-              t.set(userDocRef, { wallet: updated }, { merge: true });
-            });
-
-            showMessage('Deposit recorded and wallet updated.');
-            amountInput.value = '';
-
-          }catch(err){
-            console.error('Finalize error', err);
-            await txRef.update({ status: 'error', errorMessage: String(err) });
-            showMessage('There was a problem finalizing the deposit. Contact support.', true);
-          }
-        },
-        onClose: function(){
-          showMessage('Payment dialog closed. If you completed payment, check Transactions or contact support.', true);
+        if(!file){
+          showMessage("Please upload a receipt", true);
+          return;
         }
-      });
 
-      handler.openIframe();
+        try{
+          const storageRef = storage.ref(`receipts/${user.uid}_${Date.now()}_${file.name}`);
+          await storageRef.put(file);
+          const url = await storageRef.getDownloadURL();
+
+          await db.collection('deposits').add({
+            uid: user.uid,
+            amount: amount,
+            receiptUrl: url,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          showMessage("Deposit submitted. Awaiting admin approval.");
+          amountInput.value = '';
+          receiptInput.value = '';
+        }catch(err){
+          console.error(err);
+          showMessage("Error submitting deposit. Try again.", true);
+        }
+      }
     });
-
-    // Small helper: if you want other pages to reflect wallet changes in real-time, include a similar Firestore onSnapshot listener
-    // on each page (dashboard.html, profile.html, withdraw.html, transactions.html, invest.html) that listens to db.collection('users').doc(uid)
-    // and updates the UI when wallet changes. That guarantees a unique, real-time wallet value across pages.
   </script></body>
-</html>
+  </html>
