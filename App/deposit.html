@@ -1,152 +1,452 @@
-<!doctype html>
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pocket Investie — Deposit</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      height: 100vh;
-      background: linear-gradient(135deg, #ff3d3d, #2563eb);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 24px;
-      max-width: 600px;
-      width: 100%;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-    }
-    h1 {
-      font-size: 20px;
-      margin: 0 0 8px 0;
-    }
-    .hint {font-size: 14px;color: #555;}
-    .form-row {margin-top: 16px;display: flex;flex-direction: column;gap: 8px;}
-    label {font-weight: 600;}
-    input[type="number"], input[type="file"] {
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-    button {
-      padding: 12px 16px;
-      border: none;
-      border-radius: 10px;
-      background: linear-gradient(90deg,#2563eb,#4f46e5);
-      color: #fff;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .nav-shortcuts {margin-top: 16px;display:flex;gap:8px;flex-wrap:wrap}
-    .nav-shortcuts a{padding:8px 10px;border-radius:8px;background:#f0f0f0;text-decoration:none;color:#111;font-weight:600}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposit Funds - Pocket Investie</title>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #dc2430, #7b4397);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-icon {
+            background: #fff;
+            color: #dc2430;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .nav-link {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .balance-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+        
+        .balance-amount {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .deposit-form {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+        }
+        
+        .btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .action-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .transaction-history {
+            margin-top: 40px;
+        }
+        
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .transaction-amount {
+            font-weight: bold;
+        }
+        
+        .deposit {
+            color: #4cd964;
+        }
+        
+        .withdrawal {
+            color: #ff3b30;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 40px;
+            opacity: 0.7;
+            font-size: 14px;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            margin-top: 5px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .success-message {
+            background: rgba(76, 217, 100, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Pocket Investie — Deposit</h1>
-    <p class="hint">Transfer to the bank account below and upload your payment receipt. Your deposit will be reviewed and approved by admin before your wallet is updated.</p><div style="margin-top:12px;">
-  <strong>Bank Details:</strong>
-  <p>Bank: palmpay Ltd<br>Account Name: C****** S******   <br>Account Number: <strong>7062791952</strong></p>
-</div>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">PI</div>
+                Pocket Investie
+            </div>
+            <div class="nav-links">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="profile.html" class="nav-link">Profile</a>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="card balance-card">
+                <div class="card-title">YOUR CURRENT BALANCE</div>
+                <div class="balance-amount" id="userBalance">₦0.00</div>
+                <div class="card-title">RECENT TRANSACTIONS</div>
+                <div class="transaction-item">
+                    <div class="transaction-details">
+                        <div>Deposit</div>
+                        <div class="transaction-date">Today</div>
+                    </div>
+                    <div class="transaction-amount deposit">+ ₦0.00</div>
+                </div>
+                <div class="transaction-item">
+                    <div class="transaction-details">
+                        <div>Investment</div>
+                        <div class="transaction-date">Yesterday</div>
+                    </div>
+                    <div class="transaction-amount withdrawal">- ₦0.00</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">MAKE A DEPOSIT</div>
+                <div class="deposit-form">
+                    <div class="form-group">
+                        <label for="amount">Amount (Minimum: ₦100)</label>
+                        <input type="number" id="amount" placeholder="Enter amount" min="100">
+                        <div class="error" id="amountError">Please enter at least ₦100</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" placeholder="Your email address">
+                        <div class="error" id="emailError">Please enter a valid email</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="handleDeposit()">Deposit Now</button>
+                    
+                    <div class="success-message" id="successMessage">
+                        Deposit successful! Your balance will be updated shortly.
+                    </div>
+                </div>
+                
+                <div class="quick-actions">
+                    <a href="dashboard.html" class="action-btn">
+                        <div class="action-icon">📊</div>
+                        <div>Dashboard</div>
+                    </a>
+                    <a href="withdraw.html" class="action-btn">
+                        <div class="action-icon">💸</div>
+                        <div>Withdraw</div>
+                    </a>
+                    <a href="invest.html" class="action-btn">
+                        <div class="action-icon">📈</div>
+                        <div>Invest</div>
+                    </a>
+                    <a href="profile.html" class="action-btn">
+                        <div class="action-icon">👤</div>
+                        <div>Profile</div>
+        </div>
+        
+        <footer>
+            <p>© 2025 Pocket Investie. All rights reserved.</p>
+            <p>Developed and managed by Victorex Binary Option Traders</p>
+        </footer>
+    </div>
 
-<div class="form-row">
-  <label for="amount">Amount (₦)</label>
-  <input id="amount" type="number" min="100" placeholder="Enter amount (min ₦100)" />
-</div>
-
-<div class="form-row">
-  <label for="receipt">Upload Payment Receipt</label>
-  <input id="receipt" type="file" accept="image/*" />
-</div>
-
-<div class="form-row">
-  <button id="submit-btn">Submit Deposit</button>
-</div>
-
-<div id="message" style="margin-top:12px;color:#111;font-weight:600"></div>
-
-<div class="nav-shortcuts">
-  <a href="dashboard.html">Dashboard</a>
-  <a href="withdraw.html">Withdraw</a>
-  <a href="profile.html">Profile</a>
-  <a href="transactions.html">Transactions</a>
-  <a href="invest.html">Invest</a>
-</div>
-
-  </div>  <!-- Firebase CDN -->  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>  <script>
-    // Replace with your Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
-      authDomain: "pocket-investie.firebaseapp.com",
-      projectId: "pocket-investie",
-      storageBucket: "pocket-investie.firebasestorage.app",
-      messagingSenderId: "246875262393",
-      appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-
-    const amountInput = document.getElementById('amount');
-    const receiptInput = document.getElementById('receipt');
-    const submitBtn = document.getElementById('submit-btn');
-    const messageEl = document.getElementById('message');
-
-    function showMessage(msg, isError=false){
-      messageEl.style.color = isError ? 'red' : 'green';
-      messageEl.textContent = msg;
-    }
-
-    auth.onAuthStateChanged(user => {
-      if(!user){
-        showMessage("Please login to deposit.", true);
-        return;
-      }
-      submitBtn.onclick = async () => {
-        const amount = Number(amountInput.value);
-        const file = receiptInput.files[0];
-
-        if(!amount || amount < 100){
-          showMessage("Minimum deposit is ₦100", true);
-          return;
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "your-project-id.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project-id.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        
+        // Paystack public key (replace with your actual key)
+        const paystackPublicKey = "pk_test_your_public_key_here";
+        
+        // Current user data
+        let currentUser = null;
+        
+        // Check if user is logged in
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('email').value = user.email;
+                loadUserData(user.uid);
+            } else {
+                // Redirect to login if not authenticated
+                window.location.href = "login.html";
+            }
+        });
+        
+        // Load user data from Firestore
+        function loadUserData(uid) {
+            db.collection("users").doc(uid).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    const userData = doc.data();
+                    document.getElementById('userBalance').textContent = `₦${userData.balance.toLocaleString()}`;
+                }
+            })
+            .catch((error) => {
+                console.log("Error getting document:", error);
+            });
         }
-        if(!file){
-          showMessage("Please upload a receipt", true);
-          return;
+        
+        // Handle deposit process
+        function handleDeposit() {
+            const amount = document.getElementById('amount').value;
+            const email = document.getElementById('email').value;
+            
+            // Reset errors
+            document.getElementById('amountError').style.display = 'none';
+            document.getElementById('emailError').style.display = 'none';
+            
+            // Validate inputs
+            let isValid = true;
+            
+            if (!amount || amount < 100) {
+                document.getElementById('amountError').style.display = 'block';
+                isValid = false;
+            }
+            
+            if (!email || !email.includes('@')) {
+                document.getElementById('emailError').style.display = 'block';
+                isValid = false;
+            }
+            
+            if (!isValid) return;
+            
+            // Initiate payment with Paystack
+            const handler = PaystackPop.setup({
+                key: paystackPublicKey,
+                email: email,
+                amount: amount * 100, // Convert to kobo
+                currency: 'NGN',
+                ref: '' + Math.floor((Math.random() * 1000000000) + 1),
+                onClose: function() {
+                    alert('Transaction was not completed.');
+                },
+                callback: function(response) {
+                    // Payment successful, update Firebase
+                    recordTransaction(amount, response.reference);
+                }
+            });
+            
+            handler.openIframe();
         }
-
-        try{
-          const storageRef = storage.ref(`receipts/${user.uid}_${Date.now()}_${file.name}`);
-          await storageRef.put(file);
-          const url = await storageRef.getDownloadURL();
-
-          await db.collection('deposits').add({
-            uid: user.uid,
-            amount: amount,
-            receiptUrl: url,
-            status: 'pending',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-
-          showMessage("Deposit submitted. Awaiting admin approval.");
-          amountInput.value = '';
-          receiptInput.value = '';
-        }catch(err){
-          console.error(err);
-          showMessage("Error submitting deposit. Try again.", true);
+        
+        // Record transaction in Firestore
+        function recordTransaction(amount, reference) {
+            const transactionData = {
+                amount: parseFloat(amount),
+                date: new Date(),
+                type: 'deposit',
+                status: 'completed',
+                reference: reference,
+                userId: currentUser.uid
+            };
+            
+            // Add to transactions collection
+            db.collection("transactions").add(transactionData)
+            .then(() => {
+                // Update user balance
+                const userRef = db.collection("users").doc(currentUser.uid);
+                
+                userRef.update({
+                    balance: firebase.firestore.FieldValue.increment(parseFloat(amount))
+                })
+                .then(() => {
+                    // Show success message
+                    document.getElementById('successMessage').style.display = 'block';
+                    
+                    // Update UI
+                    loadUserData(currentUser.uid);
+                    
+                    // Clear form
+                    document.getElementById('amount').value = '';
+                })
+                .catch((error) => {
+                    console.error("Error updating balance: ", error);
+                });
+            })
+            .catch((error) => {
+                console.error("Error adding transaction: ", error);
+            });
         }
-      }
-    });
-  </script></body>
-  </html>
+    </script>
+</body>
+</html>
