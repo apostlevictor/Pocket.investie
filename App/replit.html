@@ -1,0 +1,259 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Payment Receipt Maker (Demo)</title>
+  <style>
+    :root{--accent:#0b5;--bg:#f6f7fb;--card:#ffffff;--muted:#6b7280}
+    body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); margin:0;padding:24px;color:#111}
+    .wrap{max-width:920px;margin:0 auto}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    .brand{background:linear-gradient(135deg,#eef,#def);padding:12px 18px;border-radius:10px;font-weight:700}
+    h1{font-size:18px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:1fr 420px;gap:18px}
+.card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(16,24,40,0.06)}
+
+form .row{display:flex;gap:12px;margin-bottom:10px}
+label{font-size:12px;color:var(--muted);min-width:120px}
+input,select,textarea{flex:1;padding:8px 10px;border-radius:8px;border:1px solid #e6e9ef;font-size:14px}
+textarea{resize:vertical;min-height:64px}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+button{background:var(--accent);color:#033;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600}
+button.ghost{background:transparent;border:1px solid #d1d5db;color:#111}
+
+/* Receipt styles */
+.receipt{padding:18px;border-radius:10px;position:relative;overflow:hidden}
+.watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:56px;color:rgba(0,0,0,0.04);transform:rotate(-12deg);pointer-events:none}
+.receipt-header{display:flex;justify-content:space-between;align-items:flex-start}
+.receipt-title{font-weight:800;font-size:18px}
+.meta{font-size:12px;color:var(--muted)}
+.section{margin-top:12px;border-top:1px dashed #e6e6ef;padding-top:12px}
+.rowk{display:flex;justify-content:space-between;gap:12px}
+.col{flex:1}
+.amount{font-size:28px;font-weight:800;color:#0a7}
+.small{font-size:12px;color:var(--muted)}
+
+.footer-note{font-size:12px;color:#9ca3af;margin-top:12px}
+
+/* responsive */
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">Receipt Demo</div>
+      <div>
+        <h1>Payment Receipt Maker — Demo (Not official)</h1>
+        <p class="lead">Single-file HTML page. Enter fields on the left and click "Generate Receipt". This template is for testing/demo only — it is not an official OPAY receipt and must not be used for fraud.</p>
+      </div>
+    </header><div class="grid">
+  <div>
+    <div class="card">
+      <form id="receiptForm" onsubmit="return false;">
+        <h3 style="margin-top:0">Sender / Payer</h3>
+        <div class="row"><label>Sender name</label><input id="senderName" placeholder="John Doe" required></div>
+        <div class="row"><label>Sender account</label><input id="senderAccount" placeholder="0123456789" required></div>
+        <div class="row"><label>Sender bank</label><input id="senderBank" placeholder="Example Bank" required></div>
+
+        <h3 style="margin-top:8px">Receiver / Payee</h3>
+        <div class="row"><label>Receiver name</label><input id="receiverName" placeholder="Jane Smith" required></div>
+        <div class="row"><label>Receiver account</label><input id="receiverAccount" placeholder="9876543210" required></div>
+        <div class="row"><label>Receiver bank</label><input id="receiverBank" placeholder="Another Bank" required></div>
+
+        <h3 style="margin-top:8px">Transaction</h3>
+        <div class="row"><label>Amount (NGN)</label><input id="amount" type="number" step="0.01" placeholder="1000.00" required></div>
+        <div class="row"><label>Narration</label><input id="narration" placeholder="Payment for goods"></div>
+        <div class="row"><label>Session / Txn ID</label><input id="sessionId" placeholder="(leave blank to auto-generate)"></div>
+        <div class="row"><label>Status</label>
+          <select id="status">
+            <option value="Success">Success</option>
+            <option value="Pending">Pending</option>
+            <option value="Failed">Failed</option>
+          </select>
+        </div>
+        <div class="row"><label>Reference</label><input id="reference" placeholder="Ref-12345"></div>
+
+        <div class="actions">
+          <button type="button" onclick="generateReceipt()">Generate Receipt</button>
+          <button class="ghost" type="button" onclick="resetForm()">Reset</button>
+          <button class="ghost" type="button" onclick="printReceipt()">Print</button>
+        </div>
+      </form>
+    </div>
+
+    <div style="margin-top:12px" class="card">
+      <div class="small">Hints:</div>
+      <ul style="margin:8px 0 0 18px;color:var(--muted);font-size:13px">
+        <li>All content is rendered locally in your browser — nothing is sent anywhere.</li>
+        <li>This file intentionally avoids using any real company's logo or exact template. Use only for demos/testing.</li>
+        <li>Click Print to print or save as PDF from your browser.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div>
+    <div class="card receipt" id="receiptPreview">
+      <div class="watermark">SAMPLE</div>
+      <div class="receipt-header">
+        <div>
+          <div class="receipt-title">Payment Receipt</div>
+          <div class="meta" id="metaLocal">Generated: —</div>
+        </div>
+        <div style="text-align:right">
+          <div class="small">Receipt ID</div>
+          <div id="displaySession" style="font-weight:700">—</div>
+          <div class="small" id="displayRef">Ref: —</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="rowk">
+          <div class="col">
+            <div class="small">From</div>
+            <div id="dSender" style="font-weight:700">—</div>
+            <div class="small" id="dSenderAcc">—</div>
+          </div>
+
+          <div class="col">
+            <div class="small">To</div>
+            <div id="dReceiver" style="font-weight:700">—</div>
+            <div class="small" id="dReceiverAcc">—</div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:12px">
+          <div>
+            <div class="small">Narration</div>
+            <div id="dNarration">—</div>
+          </div>
+          <div style="text-align:right">
+            <div class="small">Status</div>
+            <div id="dStatus" style="font-weight:700">—</div>
+            <div style="height:8px"></div>
+            <div class="amount" id="dAmount">—</div>
+            <div class="small">Currency: NGN</div>
+          </div>
+        </div>
+
+        <div class="footer-note">This is a demo receipt. It is not an official document and must not be used to impersonate any company or to commit fraud.</div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;text-align:center">
+      <button onclick="downloadPNG()">Download as PNG</button>
+    </div>
+  </div>
+</div>
+
+  </div>  <script>
+    function formatCurrency(v){
+      if(!v && v !== 0) return '—';
+      return Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+
+    function nowString(){
+      const d = new Date();
+      return d.toLocaleString();
+    }
+
+    function randomId(len=10){
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let s=''; for(let i=0;i<len;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+      return s;
+    }
+
+    function generateReceipt(){
+      const senderName = document.getElementById('senderName').value.trim() || '—';
+      const senderAccount = document.getElementById('senderAccount').value.trim() || '—';
+      const senderBank = document.getElementById('senderBank').value.trim() || '—';
+      const receiverName = document.getElementById('receiverName').value.trim() || '—';
+      const receiverAccount = document.getElementById('receiverAccount').value.trim() || '—';
+      const receiverBank = document.getElementById('receiverBank').value.trim() || '—';
+      const amount = document.getElementById('amount').value.trim();
+      const narration = document.getElementById('narration').value.trim() || '—';
+      let sessionId = document.getElementById('sessionId').value.trim();
+      const status = document.getElementById('status').value;
+      const reference = document.getElementById('reference').value.trim() || ('REF-' + randomId(6));
+
+      if(!sessionId) sessionId = 'SID-' + randomId(8);
+
+      document.getElementById('displaySession').textContent = sessionId;
+      document.getElementById('displayRef').textContent = 'Ref: ' + reference;
+      document.getElementById('metaLocal').textContent = 'Generated: ' + nowString() + ' (local time)';
+
+      document.getElementById('dSender').textContent = senderName + ' — ' + senderBank;
+      document.getElementById('dSenderAcc').textContent = 'A/C: ' + senderAccount;
+
+      document.getElementById('dReceiver').textContent = receiverName + ' — ' + receiverBank;
+      document.getElementById('dReceiverAcc').textContent = 'A/C: ' + receiverAccount;
+
+      document.getElementById('dNarration').textContent = narration;
+      document.getElementById('dStatus').textContent = status;
+      document.getElementById('dAmount').textContent = 'NGN ' + formatCurrency(amount);
+
+      // small visual cue for success/fail
+      const receiptEl = document.getElementById('receiptPreview');
+      receiptEl.style.borderLeft = status === 'Success' ? '4px solid #10b981' : (status === 'Failed' ? '4px solid #ef4444' : '4px solid #f59e0b');
+    }
+
+    function resetForm(){
+      document.getElementById('receiptForm').reset();
+      document.getElementById('displaySession').textContent = '—';
+      document.getElementById('displayRef').textContent = 'Ref: —';
+      document.getElementById('metaLocal').textContent = 'Generated: —';
+      document.getElementById('dSender').textContent = '—';
+      document.getElementById('dSenderAcc').textContent = '—';
+      document.getElementById('dReceiver').textContent = '—';
+      document.getElementById('dReceiverAcc').textContent = '—';
+      document.getElementById('dNarration').textContent = '—';
+      document.getElementById('dStatus').textContent = '—';
+      document.getElementById('dAmount').textContent = '—';
+    }
+
+    function printReceipt(){
+      const original = document.body.innerHTML;
+      const el = document.getElementById('receiptPreview').outerHTML;
+      const win = window.open('', '_blank');
+      win.document.write('<html><head><title>Receipt Print</title>');
+      win.document.write('<meta name="viewport" content="width=device-width,initial-scale=1"/>');
+      win.document.write('<style>body{font-family:Inter,Arial;padding:24px;background:#fff} .card{box-shadow:none} .watermark{display:none}</style>');win.document.write('</head><body>');
+  win.document.write(el);
+  win.document.write('</body></html>');
+  win.document.close();
+  win.focus();
+  setTimeout(()=>{win.print();},250);
+}
+
+// Download receipt as PNG using canvas
+async function downloadPNG(){
+  // render receipt DOM to canvas using SVG foreignObject (works in modern browsers)
+  const node = document.getElementById('receiptPreview');
+  const width = node.offsetWidth;
+  const height = node.offsetHeight;
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}'><foreignObject width='100%' height='100%'>${new XMLSerializer().serializeToString(node)}</foreignObject></svg>`;
+  const svg64 = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  const img = new Image();
+  img.onload = function(){
+    const canvas = document.createElement('canvas'); canvas.width = width*2; canvas.height = height*2; // increase resolution
+    const ctx = canvas.getContext('2d'); ctx.scale(2,2);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,width,height);
+    ctx.drawImage(img,0,0);
+    const a = document.createElement('a'); a.download = (document.getElementById('displaySession').textContent || 'receipt') + '.png';
+    a.href = canvas.toDataURL('image/png'); a.click();
+  };
+  img.onerror = function(){alert('Image render failed in this browser. Use Print -> Save as PDF instead.');};
+  img.src = svg64;
+}
+
+// init with sample
+(function(){
+  document.getElementById('metaLocal').textContent = 'Generated: —';
+})();
+
+  </script>
+</body>
+</html>
