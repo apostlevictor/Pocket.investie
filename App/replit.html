@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>pocketinvestie PLC</title>
+    <title>Pocket-investie Bank Receipt Generator</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -14,37 +14,13 @@
         }
         
         body {
-            background-color: #f5f7fa;
+            background: linear-gradient(135deg, #1a3a5f 0%, #2c5c8a 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
             padding: 20px;
-        }
-        
-        .header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .logo {
-            width: 120px;
-            height: 40px;
-            background: linear-gradient(90deg, #00AA4F 0%, #00CD7E 100%);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 24px;
-            margin-right: 15px;
-        }
-        
-        h1 {
             color: #333;
-            font-size: 24px;
         }
         
         .container {
@@ -63,7 +39,7 @@
             background: white;
             padding: 25px;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
         
         .receipt-container {
@@ -72,10 +48,46 @@
             max-width: 400px;
         }
         
+        .bank-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #1a3a5f;
+        }
+        
+        .bank-logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #1a3a5f 0%, #2c5c8a 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            margin-right: 15px;
+        }
+        
+        .bank-title {
+            color: #1a3a5f;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .bank-subtitle {
+            color: #2c5c8a;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
         h2 {
-            color: #00AA4F;
+            color: #1a3a5f;
             margin-bottom: 20px;
             text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
         }
         
         .form-group {
@@ -86,7 +98,8 @@
             display: block;
             margin-bottom: 5px;
             font-weight: 600;
-            color: #444;
+            color: #1a3a5f;
+            font-size: 14px;
         }
         
         input, select {
@@ -95,16 +108,18 @@
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
+            background: #f9fafc;
         }
         
         input:focus, select:focus {
-            border-color: #00AA4F;
+            border-color: #2c5c8a;
             outline: none;
+            box-shadow: 0 0 0 2px rgba(44, 92, 138, 0.2);
         }
         
         .btn {
-            background: linear-gradient(90deg, #00AA4F 0%, #00CD7E 100%);
+            background: linear-gradient(135deg, #1a3a5f 0%, #2c5c8a 100%);
             color: white;
             border: none;
             padding: 14px 20px;
@@ -117,23 +132,38 @@
         }
         
         .btn:hover {
-            background: linear-gradient(90deg, #008a3e 0%, #00b86a 100%);
+            background: linear-gradient(135deg, #152a46 0%, #234a72 100%);
             transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0, 170, 79, 0.2);
+            box-shadow: 0 5px 15px rgba(26, 58, 95, 0.3);
         }
         
         .receipt {
             background: white;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             overflow: hidden;
+            position: relative;
+        }
+        
+        .receipt::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><text x="0" y="100" transform="rotate(-45 100 100)" fill="rgba(26,58,95,0.03)" font-size="20" font-weight="700">Pocket-investie Bank</text></svg>');
+            z-index: 1;
+            pointer-events: none;
         }
         
         .receipt-header {
-            background: linear-gradient(90deg, #00AA4F 0%, #00CD7E 100%);
+            background: linear-gradient(135deg, #1a3a5f 0%, #2c5c8a 100%);
             color: white;
             padding: 20px;
             text-align: center;
+            position: relative;
+            z-index: 2;
         }
         
         .receipt-title {
@@ -149,6 +179,8 @@
         
         .receipt-content {
             padding: 20px;
+            position: relative;
+            z-index: 2;
         }
         
         .receipt-row {
@@ -156,12 +188,13 @@
             justify-content: space-between;
             margin-bottom: 15px;
             padding-bottom: 15px;
-            border-bottom: 1px dashed #eee;
+            border-bottom: 1px dashed #e0e0e0;
         }
         
         .receipt-label {
-            color: #777;
+            color: #666;
             font-weight: 500;
+            font-size: 14px;
         }
         
         .receipt-value {
@@ -169,20 +202,23 @@
             color: #333;
             text-align: right;
             max-width: 60%;
+            font-size: 14px;
         }
         
         .amount {
             font-size: 24px;
-            color: #00AA4F;
+            color: #1a3a5f;
             font-weight: 700;
         }
         
         .receipt-footer {
-            background: #f9f9f9;
+            background: #f5f7fa;
             padding: 15px 20px;
             text-align: center;
             font-size: 12px;
-            color: #999;
+            color: #666;
+            position: relative;
+            z-index: 2;
         }
         
         .success-badge {
@@ -190,8 +226,11 @@
             align-items: center;
             justify-content: center;
             margin: 15px 0;
-            color: #00AA4F;
+            color: #2ecc71;
             font-weight: 600;
+            background: rgba(46, 204, 113, 0.1);
+            padding: 10px;
+            border-radius: 8px;
         }
         
         .success-badge i {
@@ -201,12 +240,25 @@
         
         .print-btn {
             margin-top: 20px;
-            background: #444;
+            background: #1a3a5f;
             display: none;
         }
         
         .print-btn:hover {
-            background: #333;
+            background: #152a46;
+        }
+        
+        .security-tag {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+            color: #2c5c8a;
+            font-size: 12px;
+        }
+        
+        .security-tag i {
+            margin-right: 5px;
         }
         
         @media (max-width: 768px) {
@@ -220,16 +272,34 @@
                 max-width: 100%;
             }
         }
+        
+        .watermark {
+            position: absolute;
+            opacity: 0.03;
+            font-size: 80px;
+            font-weight: 900;
+            color: #1a3a5f;
+            transform: rotate(-45deg);
+            top: 30%;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 1;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="logo">pocketinvestie PLC</div>
-        <h1>make transfer</h1>
-    </div>
-    
     <div class="container">
         <div class="form-container">
+            <div class="bank-header">
+                <div class="bank-logo">PB</div>
+                <div>
+                    <div class="bank-title">Pocket-investie Bank</div>
+                    <div class="bank-subtitle">Secure Transaction Receipt</div>
+                </div>
+            </div>
+            
             <h2>Transaction Details</h2>
             <form id="transactionForm">
                 <div class="form-group">
@@ -246,7 +316,7 @@
                     <label for="senderBank">Sender Bank</label>
                     <select id="senderBank" required>
                         <option value="">Select bank</option>
-                        <option value="OPAY">OPAY</option>
+                        <option value="Pocket-investie Bank">Pocket-investie Bank</option>
                         <option value="GTBank">GTBank</option>
                         <option value="First Bank">First Bank</option>
                         <option value="Zenith Bank">Zenith Bank</option>
@@ -268,7 +338,7 @@
                     <label for="receiverBank">Receiver Bank</label>
                     <select id="receiverBank" required>
                         <option value="">Select bank</option>
-                        <option value="OPAY">OPAY</option>
+                        <option value="Pocket-investie Bank">Pocket-investie Bank</option>
                         <option value="GTBank">GTBank</option>
                         <option value="First Bank">First Bank</option>
                         <option value="Zenith Bank">Zenith Bank</option>
@@ -296,10 +366,12 @@
         </div>
         
         <div class="receipt-container">
-            <h2>Transaction Receipt</h2>
+            <h2 style="color: white;">Transaction Receipt</h2>
             <div class="receipt">
+                <div class="watermark">POCKET-INVESTIE BANK</div>
+                
                 <div class="receipt-header">
-                    <div class="receipt-title">OPAY</div>
+                    <div class="receipt-title">POCKET-INVESTIE BANK</div>
                     <div class="receipt-subtitle">Digital Financial Services</div>
                 </div>
                 
@@ -309,6 +381,11 @@
                         <span>Transaction Successful</span>
                     </div>
                     
+                    <div class="security-tag">
+                        <i class="fas fa-lock"></i>
+                        <span>Secured Transaction | SSL Encrypted</span>
+                    </div>
+                    
                     <div class="receipt-row">
                         <span class="receipt-label">Transaction Date:</span>
                         <span class="receipt-value" id="receiptDate">--</span>
@@ -316,7 +393,7 @@
                     
                     <div class="receipt-row">
                         <span class="receipt-label">Transaction ID:</span>
-  OPAY                  <span class="receipt-value" id="receiptId">--</span>
+                        <span class="receipt-value" id="receiptId">--</span>
                     </div>
                     
                     <div class="receipt-row">
@@ -366,13 +443,14 @@
                     
                     <div class="receipt-row">
                         <span class="receipt-label">Status:</span>
-                        <span class="receipt-value" style="color: #00AA4F;">Successful</span>
+                        <span class="receipt-value" style="color: #2ecc71;">Successful</span>
                     </div>
                 </div>
                 
                 <div class="receipt-footer">
-                    <p>Thank you for using OPAY</p>
-                    <p>Contact support: support@opay.africa | +234 1 700 0000</p>
+                    <p>Thank you for banking with Pocket-investie Bank</p>
+                    <p>Contact support: support@pocketinvestie.com | +234 1 700 0000</p>
+                    <p>www.pocketinvestie.com</p>
                 </div>
             </div>
             
@@ -405,7 +483,8 @@
                 });
                 const time = now.toLocaleTimeString('en-US', {
                     hour: '2-digit',
-                    minute: '2-digit'
+                    minute: '2-digit',
+                    second: '2-digit'
                 });
                 return `${date} at ${time}`;
             }
