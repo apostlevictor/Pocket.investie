@@ -221,19 +221,32 @@
             z-index: 2;
         }
         
-        .success-badge {
+        .status-badge {
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 15px 0;
-            color: #2ecc71;
             font-weight: 600;
-            background: rgba(46, 204, 113, 0.1);
             padding: 10px;
             border-radius: 8px;
         }
         
-        .success-badge i {
+        .status-success {
+            background: rgba(46, 204, 113, 0.1);
+            color: #2ecc71;
+        }
+        
+        .status-pending {
+            background: rgba(241, 196, 15, 0.1);
+            color: #f1c40f;
+        }
+        
+        .status-failed {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+        
+        .status-badge i {
             margin-right: 8px;
             font-size: 20px;
         }
@@ -261,6 +274,16 @@
             margin-right: 5px;
         }
         
+        .verification-strip {
+            background: #1a3a5f;
+            color: white;
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -286,6 +309,54 @@
             text-align: center;
             z-index: 1;
             pointer-events: none;
+        }
+        
+        .transaction-code {
+            font-family: monospace;
+            letter-spacing: 2px;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px dashed #dee2e6;
+        }
+        
+        .security-features {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #e0e0e0;
+        }
+        
+        .security-feature {
+            text-align: center;
+            font-size: 10px;
+            color: #6c757d;
+        }
+        
+        .holographic {
+            background: linear-gradient(45deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.2) 100%);
+            height: 20px;
+            margin: 10px 0;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .holographic::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: holographicEffect 3s infinite;
+        }
+        
+        @keyframes holographicEffect {
+            0% { left: -100%; }
+            100% { left: 200%; }
         }
     </style>
 </head>
@@ -361,6 +432,15 @@
                     <input type="text" id="sessionId" placeholder="Enter session ID" required>
                 </div>
                 
+                <div class="form-group">
+                    <label for="transactionStatus">Transaction Status</label>
+                    <select id="transactionStatus" required>
+                        <option value="successful">Successful</option>
+                        <option value="pending">Pending</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+                
                 <button type="submit" class="btn">Generate Receipt</button>
             </form>
         </div>
@@ -376,7 +456,7 @@
                 </div>
                 
                 <div class="receipt-content">
-                    <div class="success-badge">
+                    <div class="status-badge status-success" id="statusBadge">
                         <i class="fas fa-check-circle"></i>
                         <span>Transaction Successful</span>
                     </div>
@@ -386,6 +466,10 @@
                         <span>Secured Transaction | SSL Encrypted</span>
                     </div>
                     
+                    <div class="verification-strip">
+                        <i class="fas fa-shield-alt"></i> VERIFIED TRANSACTION ID: <span id="verificationId">--</span>
+                    </div>
+                    
                     <div class="receipt-row">
                         <span class="receipt-label">Transaction Date:</span>
                         <span class="receipt-value" id="receiptDate">--</span>
@@ -393,7 +477,7 @@
                     
                     <div class="receipt-row">
                         <span class="receipt-label">Transaction ID:</span>
-                        <span class="receipt-value" id="receiptId">--</span>
+                        <span class="receipt-value transaction-code" id="receiptId">--</span>
                     </div>
                     
                     <div class="receipt-row">
@@ -443,7 +527,24 @@
                     
                     <div class="receipt-row">
                         <span class="receipt-label">Status:</span>
-                        <span class="receipt-value" style="color: #2ecc71;">Successful</span>
+                        <span class="receipt-value" id="receiptStatus">Successful</span>
+                    </div>
+                    
+                    <div class="holographic"></div>
+                    
+                    <div class="security-features">
+                        <div class="security-feature">
+                            <i class="fas fa-qrcode"></i>
+                            <div>QR Code</div>
+                        </div>
+                        <div class="security-feature">
+                            <i class="fas fa-microchip"></i>
+                            <div>EMV Chip</div>
+                        </div>
+                        <div class="security-feature">
+                            <i class="fas fa-certificate"></i>
+                            <div>Certified</div>
+                        </div>
                     </div>
                 </div>
                 
@@ -462,6 +563,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('transactionForm');
             const printBtn = document.getElementById('printBtn');
+            const statusBadge = document.getElementById('statusBadge');
+            const receiptStatus = document.getElementById('receiptStatus');
             
             // Generate random transaction ID
             function generateTransactionId() {
@@ -471,6 +574,12 @@
                     result += chars[Math.floor(Math.random() * chars.length)];
                 }
                 return result;
+            }
+            
+            // Generate verification ID
+            function generateVerificationId() {
+                return Math.random().toString(36).substring(2, 10).toUpperCase() + 
+                       Math.random().toString(36).substring(2, 10).toUpperCase();
             }
             
             // Get current date and time
@@ -494,6 +603,30 @@
                 return '₦' + parseFloat(amount).toLocaleString('en-US');
             }
             
+            // Update status badge based on selection
+            function updateStatusBadge(status) {
+                // Remove all status classes
+                statusBadge.classList.remove('status-success', 'status-pending', 'status-failed');
+                
+                // Update based on status
+                if (status === 'successful') {
+                    statusBadge.className = 'status-badge status-success';
+                    statusBadge.innerHTML = '<i class="fas fa-check-circle"></i><span>Transaction Successful</span>';
+                    receiptStatus.textContent = 'Successful';
+                    receiptStatus.style.color = '#2ecc71';
+                } else if (status === 'pending') {
+                    statusBadge.className = 'status-badge status-pending';
+                    statusBadge.innerHTML = '<i class="fas fa-clock"></i><span>Transaction Pending</span>';
+                    receiptStatus.textContent = 'Pending';
+                    receiptStatus.style.color = '#f1c40f';
+                } else if (status === 'failed') {
+                    statusBadge.className = 'status-badge status-failed';
+                    statusBadge.innerHTML = '<i class="fas fa-times-circle"></i><span>Transaction Failed</span>';
+                    receiptStatus.textContent = 'Failed';
+                    receiptStatus.style.color = '#e74c3c';
+                }
+            }
+            
             // Handle form submission
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -508,10 +641,16 @@
                 const amount = document.getElementById('amount').value;
                 const narration = document.getElementById('narration').value;
                 const sessionId = document.getElementById('sessionId').value;
+                const status = document.getElementById('transactionStatus').value;
+                
+                // Generate IDs
+                const transactionId = generateTransactionId();
+                const verificationId = generateVerificationId();
                 
                 // Update receipt with form values
                 document.getElementById('receiptDate').textContent = getCurrentDateTime();
-                document.getElementById('receiptId').textContent = generateTransactionId();
+                document.getElementById('receiptId').textContent = transactionId;
+                document.getElementById('verificationId').textContent = verificationId;
                 document.getElementById('receiptSessionId').textContent = sessionId;
                 document.getElementById('receiptSender').textContent = senderName;
                 document.getElementById('receiptSenderAccount').textContent = senderAccount;
@@ -521,6 +660,9 @@
                 document.getElementById('receiptReceiverBank').textContent = receiverBank;
                 document.getElementById('receiptNarration').textContent = narration || 'N/A';
                 document.getElementById('receiptAmount').textContent = formatAmount(amount);
+                
+                // Update status
+                updateStatusBadge(status);
                 
                 // Show print button
                 printBtn.style.display = 'block';
