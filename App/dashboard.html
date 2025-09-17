@@ -3,404 +3,658 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Pocket Investie</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>Pocket Investie - Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <!-- Firebase App (core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase Auth -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <style>
-        .dashboard-grid {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #ff7e5f, #feb47b, #6a11cb, #2575fc);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo h1 {
+            font-size: 28px;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-left: 10px;
+        }
+        
+        .logo-icon {
+            font-size: 32px;
+            color: #6a11cb;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            margin-right: 15px;
+        }
+        
+        .notification-bell {
+            font-size: 24px;
+            color: #6a11cb;
+            margin: 0 20px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: #2c3e50;
+            padding: 12px 25px;
+            margin: 0 10px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        nav a:hover, nav a.active {
+            background: linear-gradient(90deg, rgba(106, 17, 203, 0.1), rgba(37, 117, 252, 0.1));
+            color: #6a11cb;
+        }
+        
+        nav a i {
+            margin-right: 8px;
+        }
+        
+        /* Main Dashboard Content */
+        .dashboard {
             display: grid;
-            grid-template-columns: 260px 1fr;
-            height: 100vh;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
         }
-        .sidebar {
-            background: linear-gradient(to bottom, #1a2a6c, #2a4d69);
+        
+        .welcome-banner {
+            grid-column: 1 / -1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
-        .main-content {
-            max-height: 100vh;
-            overflow-y: auto;
+        
+        .welcome-banner h2 {
+            color: #2c3e50;
+            margin-bottom: 10px;
         }
-        .card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #6a11cb;
+        }
+        
+        .stat-action {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            color: white;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
             transition: all 0.3s ease;
         }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        
+        .stat-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
-        .stat-card {
-            border-left: 4px solid;
+        
+        /* Chart Section */
+        .chart-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            grid-column: 1 / -1;
+            margin-bottom: 20px;
         }
-        .stat-card.balance {
-            border-color: #3b82f6;
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
-        .stat-card.invested {
-            border-color: #10b981;
+        
+        .chart-title {
+            font-size: 20px;
+            color: #2c3e50;
         }
-        .stat-card.profit {
-            border-color: #f59e0b;
+        
+        .chart-filter button {
+            padding: 8px 15px;
+            margin-left: 10px;
+            border: none;
+            background: #f1f2f6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-        .stat-card.pending {
-            border-color: #ef4444;
+        
+        .chart-filter button.active {
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            color: white;
         }
-        .transaction-row:hover {
-            background-color: #f9fafb;
+        
+        #portfolioChart {
+            height: 300px;
+            width: 100%;
         }
-        .investment-tag {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
+        
+        /* Investments and Transactions */
+        .investments-section, .transactions-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: #2c3e50;
+        }
+        
+        .view-all {
+            color: #6a11cb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .investment-item, .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #f1f2f6;
+        }
+        
+        .investment-details, .transaction-details {
+            flex: 1;
+        }
+        
+        .investment-name, .transaction-type {
             font-weight: 600;
+            color: #2c3e50;
         }
-        .bronze-tag {
-            background-color: #fef3c7;
-            color: #92400e;
+        
+        .investment-date, .transaction-date {
+            font-size: 14px;
+            color: #7f8c8d;
         }
-        .silver-tag {
-            background-color: #e5e7eb;
-            color: #374151;
+        
+        .investment-amount, .transaction-amount {
+            font-weight: 700;
+            font-size: 18px;
         }
-        .gold-tag {
-            background-color: #fef9c3;
-            color: #854d0e;
+        
+        .positive {
+            color: #2ecc71;
         }
-        .platinum-tag {
-            background-color: #dbeafe;
-            color: #1e40af;
+        
+        .negative {
+            color: #ff4757;
         }
-        .status-badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
+        
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .action-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .action-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            color: #6a11cb;
+        }
+        
+        .action-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .action-card p {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            color: #7f8c8d;
+        }
+        
+        /* Advertisement Banner */
+        .ad-banner {
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Notification Panel */
+        .notification-panel {
+            position: fixed;
+            top: 0;
+            right: -350px;
+            width: 350px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+            transition: right 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification-panel.active {
+            right: 0;
+        }
+        
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f1f2f6;
+        }
+        
+        .close-notifications {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+        
+        .notification-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #f1f2f6;
+        }
+        
+        .notification-item.unread {
+            background: #f9f9ff;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .notification-title {
             font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
         }
-        .status-completed {
-            background-color: #dcfce7;
-            color: #166534;
+        
+        .notification-time {
+            font-size: 12px;
+            color: #7f8c8d;
         }
-        .status-pending {
-            background-color: #fffbeb;
-            color: #854d0e;
+        
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
         }
-        .status-processing {
-            background-color: #dbeafe;
-            color: #1e40af;
-        }
-        .status-failed {
-            background-color: #fee2e2;
-            color: #b91c1c;
-        }
-        .action-btn {
-            transition: all 0.2s ease;
-        }
-        .action-btn:hover {
-            transform: scale(1.05);
+        
+        @media (max-width: 768px) {
+            nav {
+                flex-wrap: wrap;
+            }
+            
+            nav a {
+                margin-bottom: 10px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                align-items: flex-end;
+            }
+            
+            .user-details {
+                margin-top: 10px;
+                text-align: right;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50 font-sans">
-    <div class="dashboard-grid">
-        <!-- Sidebar -->
-        <div class="sidebar text-white">
-            <div class="p-6 border-b border-blue-800">
-                <div class="flex items-center">
-                    <i class="fas fa-chart-line text-blue-300 text-2xl mr-3"></i>
-                    <h1 class="text-xl font-bold">Pocket Investie</h1>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <i class="fas fa-piggy-bank logo-icon"></i>
+                <h1>Pocket Investie</h1>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
                 </div>
-                <p class="text-blue-200 text-sm mt-1">Invest Smart, Grow Wealth</p>
+                <div class="user-details">
+                    <div id="userName">Loading...</div>
+                    <div id="userEmail" style="font-size: 14px; color: #7f8c8d;">Loading...</div>
+                </div>
+                <div class="notification-bell" id="notificationBell">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Advertisement Banner -->
+        <div class="ad-banner">
+            <p>🚀 Get 5% bonus on deposits over ₦50,000 this week only! Limited time offer.</p>
+        </div>
+        
+        <!-- Navigation -->
+        <nav>
+            <a href="dashboard.html" class="active"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="invest.html"><i class="fas fa-chart-line"></i> My Investments</a>
+            <a href="deposit.html"><i class="fas fa-plus-circle"></i> Deposit Funds</a>
+            <a href="withdraw.html"><i class="fas fa-money-bill-wave"></i> Withdraw Funds</a>
+            <a href="transaction.html"><i class="fas fa-exchange-alt"></i> Transactions</a>
+            <a href="profile.html"><i class="fas fa-user-cog"></i> Account Settings</a>
+            <a href="#" id="supportLink"><i class="fas fa-headset"></i> Customer Support</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+        
+        <!-- Main Content -->
+        <div class="dashboard">
+            <!-- Welcome Banner -->
+            <div class="welcome-banner">
+                <h2>Welcome back! Here's your dashboard overview</h2>
+                <p id="welcomeMessage">We're glad to see you again. Your portfolio is growing steadily.</p>
             </div>
             
-            <div class="py-6">
-                <nav>
-                    <a href="#" class="block py-3 px-6 bg-blue-700 bg-opacity-30 border-l-4 border-blue-400">
-                        <i class="fas fa-chart-pie mr-3"></i> Dashboard
-                    </a>
-                    <a href="invest.html" class="block py-3 px-6 hover:bg-blue-700 hover:bg-opacity-20 transition duration-200">
-                        <i class="fas fa-wallet mr-3"></i> My Investments
-                    </a>
-                    <a href="deposit.html" class="block py-3 px-6 hover:bg-blue-700 hover:bg-opacity-20 transition duration-200">
-                        <i class="fas fa-plus-circle mr-3"></i> Deposit Funds
-                    </a>
-                    <a href="withdraw.html" class="block py-3 px-6 hover:bg-blue-700 hover:bg-opacity-20 transition duration-200">
-                        <i class="fas fa-money-bill-wave mr-3"></i> Withdraw Funds
-                    </a>
-                    <a href="transactions.html" class="block py-3 px-6 hover:bg-blue-700 hover:bg-opacity-20 transition duration-200">
-                        <i class="fas fa-exchange-alt mr-3"></i> Transactions
-                    </a>
-                    <a href="profile.html" class="block py-3 px-6 hover:bg-blue-700 hover:bg-opacity-20 transition duration-200">
-                        <i class="fas fa-user-cog mr-3"></i> Account Settings
-                    </a>
-                </nav>
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Wallet Balance</h3>
+                    <div class="stat-value" id="walletBalance">₦0.00</div>
+                    <a href="deposit.html" class="stat-action">Deposit Funds</a>
+                </div>
                 
-                <div class="mt-16 px-6">
-                    <div class="bg-blue-800 bg-opacity-40 rounded-xl p-4">
-                        <h3 class="font-medium mb-2">Customer Support</h3>
-                        <p class="text-sm text-blue-200 mb-3">Need assistance? Contact us 24/7</p>
-                        <button class="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg text-sm font-medium transition duration-300">
-                            <i class="fas fa-headset mr-2"></i> Live Chat
-                        </button>
+                <div class="stat-card">
+                    <h3>Total Invested</h3>
+                    <div class="stat-value" id="totalInvested">₦0.00</div>
+                    <a href="invest.html" class="stat-action">View Investments</a>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>Total Profit</h3>
+                    <div class="stat-value" id="totalProfit">₦0.00</div>
+                    <a href="withdraw.html" class="stat-action">Withdraw Profit</a>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>Pending Withdrawal</h3>
+                    <div class="stat-value" id="pendingWithdrawal">₦0.00</div>
+                    <a href="withdraw.html" class="stat-action">View Requests</a>
+                </div>
+            </div>
+            
+            <!-- Portfolio Growth Chart -->
+            <div class="chart-section">
+                <div class="chart-header">
+                    <h3 class="chart-title">Portfolio Growth</h3>
+                    <div class="chart-filter">
+                        <button class="active">1W</button>
+                        <button>1M</button>
+                        <button>6M</button>
+                        <button>1Y</button>
+                    </div>
+                </div>
+                <div id="portfolioChart"></div>
+            </div>
+            
+            <!-- Active Investments -->
+            <div class="investments-section">
+                <div class="section-header">
+                    <h3 class="section-title">Active Investments</h3>
+                    <a href="invest.html" class="view-all">View All</a>
+                </div>
+                <div id="investmentsList">
+                    <div class="investment-item">
+                        <div class="investment-details">
+                            <div class="investment-name">Premium Growth Plan</div>
+                            <div class="investment-date">Started: Jan 15, 2025</div>
+                        </div>
+                        <div class="investment-amount">₦150,000</div>
+                    </div>
+                    <div class="investment-item">
+                        <div class="investment-details">
+                            <div class="investment-name">Starter Investment</div>
+                            <div class="investment-date">Started: Dec 5, 2024</div>
+                        </div>
+                        <div class="investment-amount">₦50,000</div>
                     </div>
                 </div>
             </div>
             
-            <div class="absolute bottom-0 left-0 w-full p-4 border-t border-blue-800">
-                <button id="logoutBtn" class="w-full py-2 px-4 bg-red-600 hover:bg-red-700 rounded-lg font-medium transition duration-300">
-                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                </button>
+            <!-- Recent Transactions -->
+            <div class="transactions-section">
+                <div class="section-header">
+                    <h3 class="section-title">Recent Transactions</h3>
+                    <a href="transaction.html" class="view-all">View All</a>
+                </div>
+                <div id="transactionsList">
+                    <div class="transaction-item">
+                        <div class="transaction-details">
+                            <div class="transaction-type">Deposit</div>
+                            <div class="transaction-date">Feb 10, 2025 14:23</div>
+                        </div>
+                        <div class="transaction-amount positive">+₦50,000</div>
+                    </div>
+                    <div class="transaction-item">
+                        <div class="transaction-details">
+                            <div class="transaction-type">Withdrawal</div>
+                            <div class="transaction-date">Feb 5, 2025 09:45</div>
+                        </div>
+                        <div class="transaction-amount negative">-₦20,000</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <div class="action-card">
+                    <i class="fas fa-plus-circle action-icon"></i>
+                    <h3>Add Funds</h3>
+                    <p>Instantly deposit funds to your wallet using our secure payment gateway</p>
+                    <a href="deposit.html" class="stat-action">Deposit Now</a>
+                </div>
+                
+                <div class="action-card">
+                    <i class="fas fa-chart-line action-icon"></i>
+                    <h3>Invest Funds</h3>
+                    <p>Grow your wealth by investing in our high-return investment plans</p>
+                    <a href="invest.html" class="stat-action">Invest Now</a>
+                </div>
+                
+                <div class="action-card">
+                    <i class="fas fa-money-bill-wave action-icon"></i>
+                    <h3>Withdraw Profits</h3>
+                    <p>Withdraw your investment profits directly to your bank account</p>
+                    <a href="withdraw.html" class="stat-action">Withdraw Funds</a>
+                </div>
             </div>
         </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Header -->
-            <header class="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
-                <div>
-                    <h2 class="text-xl font-bold text-gray-800">Dashboard</h2>
-                    <p class="text-sm text-gray-600">Welcome back! Here's your dashboard overview</p>
+        
+        <!-- Footer -->
+        <footer>
+            <p>© 2025 Pocket Investie. All rights reserved.</p>
+        </footer>
+        
+        <!-- Notification Panel -->
+        <div class="notification-panel" id="notificationPanel">
+            <div class="notification-header">
+                <h3>Notifications</h3>
+                <button class="close-notifications">&times;</button>
+            </div>
+            <div class="notification-content">
+                <div class="notification-item unread">
+                    <div class="notification-title">New Investment Opportunity</div>
+                    <div class="notification-desc">A new high-yield investment plan is now available</div>
+                    <div class="notification-time">10 minutes ago</div>
                 </div>
-                <div class="flex items-center">
-                    <div class="relative">
-                        <i class="fas fa-bell text-gray-500 text-xl"></i>
-                        <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </div>
-                    <div class="ml-6 flex items-center">
-                        <div class="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10"></div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium" id="userName">Loading...</p>
-                            <p class="text-xs text-gray-500" id="userEmail">user......</p>
-                        </div>
-                    </div>
+                <div class="notification-item unread">
+                    <div class="notification-title">Deposit Received</div>
+                    <div class="notification-desc">Your deposit of ₦50,000 has been processed</div>
+                    <div class="notification-time">2 hours ago</div>
                 </div>
-            </header>
-
-            <!-- Stats Section -->
-            <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="stat-card balance card p-5">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-gray-500 text-sm">Wallet Balance</p>
-                                <h3 class="text-2xl font-bold mt-1" id="walletBalance">₦0.00</h3>
-                            </div>
-                            <div class="bg-blue-100 p-3 rounded-full">
-                                <i class="fas fa-wallet text-blue-600 text-xl"></i>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex justify-between items-center">
-                            <a href="deposit.html" class="text-blue-600 text-sm font-medium hover:text-blue-800">
-                                Deposit Funds
-                            </a>
-                            <span class="text-green-600 text-sm font-medium">
-                                <i class="fas fa-arrow-up"></i> 0.0%
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card invested card p-5">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-gray-500 text-sm">Total Invested</p>
-                                <h3 class="text-2xl font-bold mt-1" id="totalInvested">₦0.00</h3>
-                            </div>
-                            <div class="bg-green-100 p-3 rounded-full">
-                                <i class="fas fa-chart-line text-green-600 text-xl"></i>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex justify-between items-center">
-                            <a href="invest.html" class="text-green-600 text-sm font-medium hover:text-green-800">
-                                View Investments
-                            </a>
-                            <span class="text-green-600 text-sm font-medium">
-                                <i class="fas fa-arrow-up"></i> 0.0%
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card profit card p-5">
-                        <div class="flex justify-bejustify-bewalleitems-startitems-start">
-                            <div>
-                                <p class="text-gray-500 text-sm">Total Profit</p>
-                                <h3 class="text-2xl font-bold mt-1" id="totalProfit">₦0.00</h3>
-                            </div>
-                            <div class="bg-amber-100 p-3 rounded-full">
-                                <i class="fas fa-coins text-amber-600 text-xl"></i>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex justify-between items-center">
-                            <a href="withdraw.html" class="text-amber-600 text-sm font-medium hover:text-amber-800">
-                                Withdraw Profit
-                            </a>
-                            <span class="text-green-600 text-sm font-medium">
-                                <i class="fas fa-arrow-up"></i> 0.0%
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card pending card p-5">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-gray-500 text-sm">Pending Withdrawals</p>
-                                <h3 class="text-2xl font-bold mt-1" id="pendingWithdrawal">₦0.00</h3>
-                            </div>
-                            <div class="bg-red-100 p-3 rounded-full">
-                                <i class="fas fa-hourglass-half text-red-600 text-xl"></i>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <a href="withdraw.html" class="text-red-600 text-sm font-medium hover:text-red-800">
-                                View Requests
-                            </a>
-                        </div>
-                    </div>
+                <div class="notification-item">
+                    <div class="notification-title">Weekly Report</div>
+                    <div class="notification-desc">Your portfolio gained 2.3% this week</div>
+                    <div class="notification-time">1 day ago</div>
+                </div>
+                <div class="notification-item">
+                    <div class="notification-title">Account Security</div>
+                    <div class="notification-desc">We've enhanced our security features</div>
+                    <div class="notification-time">3 days ago</div>
                 </div>
             </div>
-
-            <!-- Charts and Investments -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 px-6">
-                <!-- Growth Chart -->
-                <div class="card p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-bold text-lg">Portfolio Growth</h3>
-                        <div class="flex space-x-2">
-                            <button class="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-lg">1W</button>
-                            <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg">1M</button>
-                            <button class="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-lg">6M</button>
-                            <button class="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-lg">1Y</button>
-                        </div>
-                    </div>
-                    <div class="h-80">
-                        <canvas id="growthChart"></canvas>
-                    </div>
-                </div>
-                
-                <!-- Active Investments -->
-                <div class="card p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-bold text-lg">Active Investments</h3>
-                        <a href="invest.html" class="text-blue-600 text-sm font-medium hover:text-blue-800">View All</a>
-                    </div>
-                    <div id="activeInvestments">
-                        <div class="text-center py-12">
-                            <i class="fas fa-spinner fa-spin text-blue-500 text-2xl mb-3"></i>
-                            <p class="text-gray-600">Loading investments...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Transactions -->
-            <div class="card mx-6 mt-6 p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-lg">Recent Transactions</h3>
-                    <a href="transactions.html" class="text-blue-600 text-sm font-medium hover:text-blue-800">View All Transactions</a>
-                </div>
-                
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="text-left text-gray-500 text-sm border-b">
-                                <th class="pb-3">Transaction</th>
-                                <th class="pb-3">Amount</th>
-                                <th class="pb-3">Date</th>
-                                <th class="pb-3">Status</th>
-                                <th class="pb-3">Reference</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactionsList">
-                            <tr>
-                                <td colspan="5" class="py-8 text-center">
-                                    <i class="fas fa-spinner fa-spin text-blue-500 text-xl mb-3"></i>
-                                    <p class="text-gray-600">Loading transactions...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-                <div class="card p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-                    <div class="flex items-center mb-4">
-                        <div class="bg-blue-600 p-3 rounded-full mr-4">
-                            <i class="fas fa-plus-circle text-white text-xl"></i>
-                        </div>
-                        <h3 class="font-bold text-lg">Add Funds</h3>
-                    </div>
-                    <p class="text-gray-600 mb-6">Instantly deposit funds to your wallet using our secure payment gateway</p>
-                    <a href="deposit.html" class="inline-block w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-center font-medium transition duration-300 action-btn">
-                        Deposit Now
-                    </a>
-                </div>
-                
-                <div class="card p-6 bg-gradient-to-br from-green-50 to-teal-50">
-                    <div class="flex items-center mb-4">
-                        <div class="bg-green-600 p-3 rounded-full mr-4">
-                            <i class="fas fa-seedling text-white text-xl"></i>
-                        </div>
-                        <h3 class="font-bold text-lg">Invest Funds</h3>
-                    </div>
-                    <p class="text-gray-600 mb-6">Grow your wealth by investing in our high-return investment plans</p>
-                    <a href="invest.html" class="inline-block w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg text-center font-medium transition duration-300 action-btn">
-                        Invest Now
-                    </a>
-                </div>
-                
-                <div class="card p-6 bg-gradient-to-br from-amber-50 to-orange-50">
-                    <div class="flex items-center mb-4">
-                        <div class="bg-amber-600 p-3 rounded-full mr-4">
-                            <i class="fas fa-money-bill-wave text-white text-xl"></i>
-                        </div>
-                        <h3 class="font-bold text-lg">Withdraw Profits</h3>
-                    </div>
-                    <p class="text-gray-600 mb-6">Withdraw your investment profits directly to your bank account</p>
-                    <a href="withdraw.html" class="inline-block w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-lg text-center font-medium transition duration-300 action-btn">
-                        Withdraw Funds
-                    </a>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <footer class="bg-white border-t py-6 px-6">
-                <div class="max-w-7xl mx-auto">
-                    <div class="flex flex-col md:flex-row justify-between items-center">
-                        <div class="mb-4 md:mb-0">
-                            <div class="flex items-center">
-                                <i class="fas fa-chart-line text-blue-600 text-xl mr-2"></i>
-                                <span class="font-bold">Pocket Investie</span>
-                            </div>
-                            <p class="text-gray-600 text-sm mt-1">© 2025 Pocket Investie. All rights reserved.</p>
-                        </div>
-                        <div class="flex space-x-6">
-                            <a href="#" class="text-gray-500 hover:text-blue-600">
-                                <i class="fab fa-facebook-f"></i>
-                            </a>
-                            <a href="#" class="text-gray-500 hover:text-blue-400">
-                                <i class="fab fa-twitter"></i>
-                            </a>
-                            <a href="#" class="text-gray-500 hover:text-red-600">
-                                <i class="fab fa-instagram"></i>
-                            </a>
-                            <a href="#" class="text-gray-500 hover:text-blue-700">
-                                <i class="fab fa-linkedin-in"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </footer>
         </div>
     </div>
 
     <script>
-        // Firebase configuration
+        // Firebase configuration (replace with your actual config)
         const firebaseConfig = {
             apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
             authDomain: "pocket-investie.firebaseapp.com",
@@ -409,312 +663,129 @@
             messagingSenderId: "246875262393",
             appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
         };
-
+        
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const db = firebase.firestore();
-
+        const auth = firebase.auth();
+        
         // DOM Elements
-        const userName = document.getElementById('userName');
-        const userEmail = document.getElementById('userEmail');
-        const walletBalance = document.getElementById('walletBalance');
-        const totalInvested = document.getElementById('totalInvested');
-        const totalProfit = document.getElementById('totalProfit');
-        const pendingWithdrawal = document.getElementById('pendingWithdrawal');
-        const transactionsList = document.getElementById('transactionsList');
-        const activeInvestments = document.getElementById('activeInvestments');
+        const userNameElement = document.getElementById('userName');
+        const userEmailElement = document.getElementById('userEmail');
+        const walletBalanceElement = document.getElementById('walletBalance');
+        const totalInvestedElement = document.getElementById('totalInvested');
+        const totalProfitElement = document.getElementById('totalProfit');
+        const pendingWithdrawalElement = document.getElementById('pendingWithdrawal');
+        const notificationBell = document.getElementById('notificationBell');
+        const notificationPanel = document.getElementById('notificationPanel');
+        const closeNotifications = document.querySelector('.close-notifications');
         const logoutBtn = document.getElementById('logoutBtn');
-
-        // Chart initialization
-        const growthChart = new Chart(
-            document.getElementById('growthChart'),
-            {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun' 'Jul', 'Aug', 'Sep', 'Oct', 'Nov','Dec'],
-                    datasets: [{
-                        label: 'Portfolio Value',
-                        data: [500000, 750000, 900000, 1100000, 1400000, 1650000],
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.05)',
-                        borderWidth: 3,
-                        pointRadius: 5,
-                        pointBackgroundColor: '#fff',
-                        pointBorderWidth: 3,
-                        tension: 0.2,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                drawBorder: false
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return '₦' + value.toLocaleString();
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            }
-        );
-
+        const supportLink = document.getElementById('supportLink');
+        
         // Check authentication state
         auth.onAuthStateChanged(user => {
             if (user) {
                 // User is signed in
-                userEmail.textContent = user.email;
+                userNameElement.textContent = user.displayName || 'User';
+                userEmailElement.textContent = user.email;
                 
-                // Load user data
-                loadUserData(user.uid);
-                loadTransactions(user.uid);
-                loadActiveInvestments(user.uid);
+                // Fetch user data from Firestore
+                fetchUserData(user.uid);
             } else {
-                // User is signed out
+                // User is signed out, redirect to auth page
                 window.location.href = 'auth.html';
             }
         });
-
-        // Load user data from Firestore
-        function loadUserData(userId) {
-            db.collection("users").doc(userId).get()
-            .then(doc => {
-                if (doc.exists) {
-                    const userData = doc.data();
-                    userName.textContent = userData.name || "User";
-                    walletBalance.textContent = `₦${(userData.walletBalance || 0).toLocaleString()}`;
-                    totalInvested.textContent = `₦${(userData.totalInvested || 0).toLocaleString()}`;
-                    totalProfit.textContent = `₦${(userData.totalProfit || 0).toLocaleString()}`;
-                    pendingWithdrawal.textContent = `₦${(userData.pendingWithdrawal || 0).toLocaleString()}`;
-                } else {
-                    console.log("No user data found");
-                }
-            })
-            .catch(error => {
-                console.error("Error loading user data:", error);
-            });
+        
+        // Fetch user data from Firestore
+        function fetchUserData(userId) {
+            // This is a simulation - replace with actual Firestore calls
+            setTimeout(() => {
+                // Simulated data
+                walletBalanceElement.textContent = '₦175,430.00';
+                totalInvestedElement.textContent = '₦200,000.00';
+                totalProfitElement.textContent = '₦23,450.00';
+                pendingWithdrawalElement.textContent = '₦15,000.00';
+                
+                // Update welcome message based on time of day
+                updateWelcomeMessage();
+            }, 1000);
         }
-
-        // Load transactions
-        function loadTransactions(userId) {
-            db.collection("transactions")
-                .where("userId", "==", userId)
-                .orderBy("date", "desc")
-                .limit(5)
-                .get()
-                .then(querySnapshot => {
-                    transactionsList.innerHTML = "";
-                    
-                    if (querySnapshot.empty) {
-                        transactionsList.innerHTML = `
-                            <tr>
-                                <td colspan="5" class="py-8 text-center text-gray-500">
-                                    <i class="fas fa-exchange-alt text-2xl mb-3"></i>
-                                    <p>No transactions found</p>
-                                </td>
-                            </tr>
-                        `;
-                        return;
-                    }
-                    
-                    querySnapshot.forEach(doc => {
-                        const transaction = doc.data();
-                        transactionsList.innerHTML += createTransactionRow(transaction);
-                    });
-                })
-                .catch(error => {
-                    console.error("Error loading transactions:", error);
-                    transactionsList.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="py-8 text-center text-red-500">
-                                <i class="fas fa-exclamation-triangle text-xl mb-3"></i>
-                                <p>Failed to load transactions</p>
-                            </td>
-                        </tr>
-                    `;
-                });
-        }
-
-        // Create transaction row HTML
-        function createTransactionRow(transaction) {
-            const amount = transaction.amount || 0;
-            const isDeposit = transaction.type === 'deposit';
-            const amountClass = isDeposit ? 'text-green-600' : 'text-red-600';
-            const amountSign = isDeposit ? '+' : '-';
+        
+        // Update welcome message based on time of day
+        function updateWelcomeMessage() {
+            const hour = new Date().getHours();
+            let message = "We're glad to see you again. Your portfolio is growing steadily.";
             
-            let statusClass = 'status-processing';
-            let statusText = 'Processing';
-            
-            if (transaction.status === 'completed') {
-                statusClass = 'status-completed';
-                statusText = 'Completed';
-            } else if (transaction.status === 'failed') {
-                statusClass = 'status-failed';
-                statusText = 'Failed';
-            } else if (transaction.status === 'pending') {
-                statusClass = 'status-pending';
-                statusText = 'Pending';
+            if (hour < 12) {
+                message = "Good morning! Your investments are looking great today.";
+            } else if (hour < 18) {
+                message = "Good afternoon! Check out your latest investment performance.";
+            } else {
+                message = "Good evening! Your portfolio had a productive day.";
             }
             
-            const date = transaction.date ? transaction.date.toDate().toLocaleDateString() : 'N/A';
-            
-            return `
-                <tr class="transaction-row border-b hover:bg-gray-50">
-                    <td class="py-4">
-                        <div class="flex items-center">
-                            <div class="p-2 rounded-lg mr-3 ${isDeposit ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
-                                <i class="fas ${isDeposit ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
-                            </div>
-                            <div>
-                                <p class="font-medium">${transaction.description || 'Wallet Transaction'}</p>
-                                <p class="text-gray-500 text-sm">${transaction.type || 'N/A'}</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-4 ${amountClass} font-medium">${amountSign}₦${amount.toLocaleString()}</td>
-                    <td class="py-4">${date}</td>
-                    <td class="py-4">
-                        <span class="${statusClass}">${statusText}</span>
-                    </td>
-                    <td class="py-4 text-sm text-gray-500">${transaction.reference || 'N/A'}</td>
-                </tr>
-            `;
+            document.getElementById('welcomeMessage').textContent = message;
         }
-
-        // Load active investments
-        function loadActiveInvestments(userId) {
-            db.collection("investments")
-                .where("userId", "==", userId)
-                .where("status", "==", "active")
-                .orderBy("startDate", "desc")
-                .limit(3)
-                .get()
-                .then(querySnapshot => {
-                    activeInvestments.innerHTML = "";
-                    
-                    if (querySnapshot.empty) {
-                        activeInvestments.innerHTML = `
-                            <div class="text-center py-8 text-gray-500">
-                                <i class="fas fa-seedling text-2xl mb-3"></i>
-                                <p>No active investments</p>
-                                <a href="invest.html" class="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
-                                    Start Investing
-                                </a>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    querySnapshot.forEach(doc => {
-                        const investment = doc.data();
-                        activeInvestments.innerHTML += createInvestmentCard(investment);
-                    });
-                })
-                .catch(error => {
-                    console.error("Error loading investments:", error);
-                    activeInvestments.innerHTML = `
-                        <div class="text-center py-8 text-red-500">
-                            <i class="fas fa-exclamation-triangle text-xl mb-3"></i>
-                            <p>Failed to load investments</p>
-                        </div>
-                    `;
-                });
-        }
-
-        // Create investment card HTML
-        function createInvestmentCard(investment) {
-            let planClass = 'bronze-tag';
-            if (investment.plan === 'silver') planClass = 'silver-tag';
-            if (investment.plan === 'gold') planClass = 'gold-tag';
-            if (investment.plan === 'platinum') planClass = 'platinum-tag';
-            
-            const startDate = investment.startDate ? investment.startDate.toDate().toLocaleDateString() : 'N/A';
-            const endDate = investment.endDate ? investment.endDate.toDate().toLocaleDateString() : 'N/A';
-            
-            // Calculate progress
-            const now = new Date();
-            const start = investment.startDate.toDate();
-            const end = investment.endDate.toDate();
-            const totalDuration = end - start;
-            const elapsed = now - start;
-            const progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
-            
-            return `
-                <div class="border border-gray-200 rounded-xl p-4 mb-4">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h4 class="font-bold">${investment.plan.charAt(0).toUpperCase() + investment.plan.slice(1)} Plan</h4>
-                            <span class="${planClass}">${investment.plan.toUpperCase()}</span>
-                        </div>
-                        <span class="text-green-600 font-bold">${investment.roi || 0}% ROI</span>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <p class="text-gray-500 text-sm">Amount</p>
-                            <p class="font-medium">₦${(investment.amount || 0).toLocaleString()}</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-500 text-sm">Expected Profit</p>
-                            <p class="font-medium">₦${(investment.expectedProfit || 0).toLocaleString()}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <p class="text-gray-500 text-sm mb-1">Progress</p>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-600 h-2 rounded-full" style="width: ${progress}%"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <p class="text-gray-500 text-sm">Start Date</p>
-                            <p class="text-sm">${startDate}</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-500 text-sm">End Date</p>
-                            <p class="text-sm">${endDate}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Logout function
-        logoutBtn.addEventListener('click', () => {
+        
+        // Toggle notification panel
+        notificationBell.addEventListener('click', () => {
+            notificationPanel.classList.toggle('active');
+        });
+        
+        closeNotifications.addEventListener('click', () => {
+            notificationPanel.classList.remove('active');
+        });
+        
+        // Logout functionality
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             auth.signOut().then(() => {
                 window.location.href = 'auth.html';
-            }).catch(error => {
-                console.error("Logout error:", error);
-                alert('Logout failed. Please try again.');
             });
         });
-
-        // Simulate live data updates
-        setInterval(() => {
-            if (walletBalance.textContent) {
-                const currentBalance = parseFloat(walletBalance.textContent.replace(/[^0-9.]/g, ''));
-                walletBalance.textContent = `₦${(currentBalance + Math.random() * 500).toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-            }
-        }, 10000);
+        
+        // Support link
+        supportLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('Our customer support team is available 24/7. Please email support@pocketinvestie.com or use the live chat feature.');
+        });
+        
+        // Initialize Google Charts
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+        
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable([
+                ['Day', 'Portfolio Value'],
+                ['Mon', 1000],
+                ['Tue', 1170],
+                ['Wed', 1260],
+                ['Thu', 1340],
+                ['Fri', 1420],
+                ['Sat', 1480],
+                ['Sun', 1550]
+            ]);
+            
+            var options = {
+                curveType: 'function',
+                legend: { position: 'none' },
+                colors: ['#6a11cb'],
+                backgroundColor: 'transparent',
+                hAxis: {
+                    textStyle: { color: '#7f8c8d' }
+                },
+                vAxis: {
+                    textStyle: { color: '#7f8c8d' }
+                }
+            };
+            
+            var chart = new google.visualization.LineChart(document.getElementById('portfolioChart'));
+            chart.draw(data, options);
+        }
+        
+        // Resize chart when window resizes
+        window.addEventListener('resize', drawChart);
     </script>
 </body>
 </html>
