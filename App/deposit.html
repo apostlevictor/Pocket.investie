@@ -456,6 +456,59 @@
         .toast.error {
             background: #ff4757;
         }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            color: #2c3e50;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -584,6 +637,24 @@
             <i class="fas fa-check-circle"></i>
             <span id="toastMessage">Operation completed successfully</span>
         </div>
+        
+        <!-- Payment Modal -->
+        <div class="modal" id="paymentModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Confirm Payment</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>You are about to deposit <strong id="confirmAmount">₦0.00</strong> to your Pocket Investie wallet.</p>
+                    <p>Click "Confirm" to proceed to payment.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" id="cancelPayment">Cancel</button>
+                    <button class="btn btn-primary" id="confirmPayment">Confirm</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -617,10 +688,16 @@
         const toastMessage = document.getElementById('toastMessage');
         const logoutBtn = document.getElementById('logoutBtn');
         const supportLink = document.getElementById('supportLink');
+        const paymentModal = document.getElementById('paymentModal');
+        const confirmAmount = document.getElementById('confirmAmount');
+        const confirmPayment = document.getElementById('confirmPayment');
+        const cancelPayment = document.getElementById('cancelPayment');
+        const closeModal = document.querySelector('.close-modal');
         
         // Current user data
         let userId = null;
         let userData = null;
+        let currentAmount = 0;
         
         // Check authentication state
         auth.onAuthStateChanged(user => {
@@ -709,40 +786,40 @@
             const amount = parseInt(amountInput.value);
             
             // Validate amount
-            if (!amount || amount < 100) {
-                showToast('Please enter a valid amount (minimum ₦100)', true);
+            if (!amount || amount < 1000) {
+                showToast('Please enter a valid amount (minimum ₦1000)', true);
                 return;
             }
             
-            // Initialize payment with Paystack
-            initializePayment(amount);
+            currentAmount = amount;
+            confirmAmount.textContent = `₦${amount.toLocaleString('en-US')}`;
+            paymentModal.style.display = 'flex';
+        });
+        
+        // Confirm payment
+        confirmPayment.addEventListener('click', () => {
+            paymentModal.style.display = 'none';
+            initializePayment(currentAmount);
+        });
+        
+        // Cancel payment
+        cancelPayment.addEventListener('click', () => {
+            paymentModal.style.display = 'none';
+        });
+        
+        // Close modal
+        closeModal.addEventListener('click', () => {
+            paymentModal.style.display = 'none';
         });
         
         // Initialize Paystack payment
         function initializePayment(amount) {
-            // For demo purposes, we're using a test implementation
-            // In a real app, you would use the Paystack API
-            
             // Show processing state
             depositBtn.disabled = true;
             depositBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             
-            // Simulate payment processing
-            setTimeout(() => {
-                // In a real implementation, you would:
-                // 1. Create a transaction record with status 'pending'
-                // 2. Initialize Paystack payment
-                // 3. Handle the callback
-                
-                // For demo, we'll simulate a successful payment
-                simulateSuccessfulPayment(amount);
-            }, 2000);
-        }
-        
-        // Simulate successful payment (for demo purposes)
-        function simulateSuccessfulPayment(amount) {
             // Create transaction reference
-            const ref = 'DEP_' + Date.now();
+            const ref = 'DEP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             
             // Create transaction data
             const transactionData = {
@@ -750,50 +827,123 @@
                 type: 'deposit',
                 amount: amount,
                 currency: 'NGN',
-                status: 'completed',
+                status: 'pending',
                 description: `Deposit via Card`,
                 paymentMethod: 'card',
                 transactionDate: new Date(),
-                processedAt: new Date(),
                 referenceId: ref
             };
             
-            // Add transaction to Firestore
+            // Add transaction to Firestore first
             db.collection('transactions').add(transactionData)
             .then(() => {
-                // Update user balance
-                const newBalance = (userData.currentBalance || 0) + amount;
-                
-                db.collection('users').doc(userId).update({
-                    currentBalance: newBalance,
-                    totalDeposits: (userData.totalDeposits || 0) + amount,
-                    lastUpdated: new Date()
-                })
-                .then(() => {
-                    // Show success message
-                    showToast(`Deposit of ₦${amount.toLocaleString('en-US')} successful!`);
-                    
-                    // Reset form
-                    amountInput.value = '';
-                    amountOptions.forEach(opt => opt.classList.remove('selected'));
-                    
-                    // Update UI
-                    currentBalanceElement.textContent = `₦${newBalance.toLocaleString('en-US')}`;
-                    
-                    // Refresh recent deposits
-                    fetchRecentDeposits(userId);
-                })
-                .catch(error => {
-                    console.error("Error updating user balance:", error);
-                    showToast("Error updating balance. Please contact support.", true);
+                // Initialize Paystack payment
+                const handler = PaystackPop.setup({
+                    key: paystackPublicKey,
+                    email: userData.email,
+                    amount: amount * 100, // Convert to kobo
+                    currency: 'NGN',
+                    ref: ref,
+                    callback: function(response) {
+                        // Payment successful
+                        handlePaymentSuccess(ref, response.reference);
+                    },
+                    onClose: function() {
+                        // User closed the payment modal
+                        handlePaymentCancellation(ref);
+                    }
                 });
+                
+                handler.openIframe();
             })
             .catch(error => {
-                console.error("Error adding transaction:", error);
-                showToast("Error recording transaction. Please contact support.", true);
+                console.error("Error creating transaction:", error);
+                showToast("Error processing payment. Please try again.", true);
+                depositBtn.disabled = false;
+                depositBtn.innerHTML = '<i class="fas fa-lock"></i> Proceed to Payment';
+            });
+        }
+        
+        // Handle successful payment
+        function handlePaymentSuccess(transactionRef, paymentRef) {
+            // Update transaction status
+            db.collection('transactions')
+            .where('referenceId', '==', transactionRef)
+            .get()
+            .then(querySnapshot => {
+                if (!querySnapshot.empty) {
+                    const docId = querySnapshot.docs[0].id;
+                    
+                    db.collection('transactions').doc(docId).update({
+                        status: 'completed',
+                        processedAt: new Date(),
+                        paymentReference: paymentRef
+                    });
+                    
+                    // Update user balance
+                    const newBalance = (userData.currentBalance || 0) + currentAmount;
+                    
+                    db.collection('users').doc(userId).update({
+                        currentBalance: newBalance,
+                        totalDeposits: (userData.totalDeposits || 0) + currentAmount,
+                        lastUpdated: new Date()
+                    })
+                    .then(() => {
+                        // Show success message
+                        showToast(`Deposit of ₦${currentAmount.toLocaleString('en-US')} successful!`);
+                        
+                        // Reset form
+                        amountInput.value = '';
+                        amountOptions.forEach(opt => opt.classList.remove('selected'));
+                        
+                        // Update UI
+                        currentBalanceElement.textContent = `₦${newBalance.toLocaleString('en-US')}`;
+                        
+                        // Refresh recent deposits
+                        fetchRecentDeposits(userId);
+                        
+                        // Update local user data
+                        userData.currentBalance = newBalance;
+                        userData.totalDeposits = (userData.totalDeposits || 0) + currentAmount;
+                    })
+                    .catch(error => {
+                        console.error("Error updating user balance:", error);
+                        showToast("Error updating balance. Please contact support.", true);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error updating transaction:", error);
+                showToast("Error updating transaction. Please contact support.", true);
             })
             .finally(() => {
                 // Reset button state
+                depositBtn.disabled = false;
+                depositBtn.innerHTML = '<i class="fas fa-lock"></i> Proceed to Payment';
+            });
+        }
+        
+        // Handle payment cancellation
+        function handlePaymentCancellation(transactionRef) {
+            // Update transaction status to cancelled
+            db.collection('transactions')
+            .where('referenceId', '==', transactionRef)
+            .get()
+            .then(querySnapshot => {
+                if (!querySnapshot.empty) {
+                    const docId = querySnapshot.docs[0].id;
+                    
+                    db.collection('transactions').doc(docId).update({
+                        status: 'cancelled',
+                        processedAt: new Date()
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error updating transaction:", error);
+            })
+            .finally(() => {
+                showToast('Payment was cancelled', true);
                 depositBtn.disabled = false;
                 depositBtn.innerHTML = '<i class="fas fa-lock"></i> Proceed to Payment';
             });
@@ -831,80 +981,6 @@
             e.preventDefault();
             alert('Our customer support team is available 24/7. Please email support@pocketinvestie.com or use the live chat feature.');
         });
-        
-        // Real Paystack implementation (commented out for demo)
-        /*
-        function initializePaystackPayment(amount, email, ref) {
-            const handler = PaystackPop.setup({
-                key: paystackPublicKey,
-                email: email,
-                amount: amount * 100, // Convert to kobo
-                currency: 'NGN',
-                ref: ref,
-                callback: function(response) {
-                    // Payment complete - update transaction status
-                    updateTransactionStatus(ref, 'completed', response.reference);
-                    
-                    // Show success message
-                    showToast('Payment successful! Your account has been credited.');
-                    
-                    // Update UI
-                    fetchUserData(userId);
-                    fetchRecentDeposits(userId);
-                },
-                onClose: function() {
-                    // User closed the payment modal
-                    updateTransactionStatus(ref, 'cancelled');
-                    showToast('Payment was cancelled', true);
-                }
-            });
-            
-            handler.openIframe();
-        }
-        
-        function updateTransactionStatus(ref, status, paymentRef = null) {
-            db.collection('transactions')
-            .where('referenceId', '==', ref)
-            .get()
-            .then(querySnapshot => {
-                if (!querySnapshot.empty) {
-                    const docId = querySnapshot.docs[0].id;
-                    const updateData = {
-                        status: status,
-                        processedAt: new Date()
-                    };
-                    
-                    if (paymentRef) {
-                        updateData.paymentReference = paymentRef;
-                    }
-                    
-                    db.collection('transactions').doc(docId).update(updateData);
-                    
-                    // If payment was successful, update user balance
-                    if (status === 'completed') {
-                        const transactionData = querySnapshot.docs[0].data();
-                        updateUserBalance(transactionData.userId, transactionData.amount);
-                    }
-                }
-            });
-        }
-        
-        function updateUserBalance(userId, amount) {
-            db.collection('users').doc(userId).get()
-            .then(doc => {
-                if (doc.exists) {
-                    const userData = doc.data();
-                    const newBalance = (userData.currentBalance || 0) + amount;
-                    
-                    db.collection('users').doc(userId).update({
-                        currentBalance: newBalance,
-                        totalDeposits: (userData.totalDeposits || 0) + amount,
-                        lastUpdated: new Date()
-                    });
-                }
-            });
-        }
-        */
     </script>
 </body>
 </html>
