@@ -516,7 +516,7 @@
         <!-- Header -->
         <header>
             <div class="logo">
-                <i class="fas fa-piggy-bank logo-icon"></i>
+                <i class="fas fa-line chart logo-icon"></i>
                 <h1>Pocket Investie</h1>
             </div>
             <div class="user-info">
@@ -786,8 +786,8 @@
             const amount = parseInt(amountInput.value);
             
             // Validate amount
-            if (!amount || amount < 1000) {
-                showToast('Please enter a valid amount (minimum ₦1000)', true);
+            if (!amount || amount < 100) {
+                showToast('Please enter a valid amount (minimum ₦100)', true);
                 return;
             }
             
