@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw Funds - Pocket Investie</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        
+        .navbar {
+            background-color: var(--primary-color);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+        }
+        
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            font-weight: 600;
+        }
+        
+        .summary-card {
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+        }
+        
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .process-step {
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .process-step i {
+            font-size: 2rem;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+        
+        .transaction-row {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: #ffeaa7;
+            color: #d35400;
+        }
+        
+        .status-completed {
+            background-color: #d5f5e3;
+            color: #27ae60;
+        }
+        
+        .status-processing {
+            background-color: #d6eaf8;
+            color: #2980b9;
+        }
+        
+        .status-failed {
+            background-color: #fadbd8;
+            color: #c0392b;
+        }
+        
+        footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 40px 0;
+        }
+        
+        .footer-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .withdraw-form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .note-highlight {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .user-welcome {
+            color: white;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-piggy-bank me-2"></i>Pocket Investie
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html"><i class="fas fa-home me-1"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="invest.html"><i class="fas fa-chart-line me-1"></i> Investments</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="deposit.html"><i class="fas fa-plus-circle me-1"></i> Deposit Funds</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="withdraw.html"><i class="fas fa-money-bill-wave me-1"></i> Withdraw Funds</a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="user-welcome" id="userWelcome">Welcome, User!</span>
+                        <button class="btn btn-outline-light btn-sm" id="logoutBtn">Logout</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Main Content -->
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-wallet me-2"></i>Withdrawal Summary
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4 mb-3">
+                                <div class="summary-card p-3 rounded">
+                                    <p>Available Balance</p>
+                                    <h3 class="summary-value" id="availableBalance">₦0.00</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="summary-card p-3 rounded">
+                                    <p>Pending Withdrawals</p>
+                                    <h3 class="summary-value" id="pendingWithdrawals">₦0.00</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="summary-card p-3 rounded">
+                                    <p>Total Withdrawn</p>
+                                    <h3 class="summary-value" id="totalWithdrawn">₦0.00</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-money-bill-wave me-2"></i>Withdrawal Request
+                    </div>
+                    <div class="card-body">
+                        <div class="withdraw-form">
+                            <form id="withdrawalForm">
+                                <div class="mb-3">
+                                    <label for="amount" class="form-label">Amount to Withdraw (₦)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₦</span>
+                                        <input type="number" class="form-control" id="amount" placeholder="Enter amount" min="100" required>
+                                    </div>
+                                    <div class="form-text">Minimum withdrawal: ₦100.00</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="bank" class="form-label">Select Bank</label>
+                                    <select class="form-select" id="bank" required>
+                                        <option value="" selected disabled>Loading banks...</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="accountNumber" class="form-label">Account Number</label>
+                                    <input type="text" class="form-control" id="accountNumber" placeholder="Enter account number" required>
+                                    <div class="form-text" id="accountVerifyStatus"></div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="accountName" class="form-label">Account Name</label>
+                                    <input type="text" class="form-control" id="accountName" placeholder="Account name will appear here" readonly>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary w-100 py-3" id="submitBtn">
+                                    <i class="fas fa-paper-plane me-2"></i>Request Withdrawal
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle me-2"></i>Withdrawal Process
+                    </div>
+                    <div class="card-body">
+                        <div class="process-step">
+                            <i class="fas fa-clipboard-check"></i>
+                            <h5>1. Submit Request</h5>
+                            <p>Fill the withdrawal form with your bank details and amount</p>
+                        </div>
+                        <div class="process-step">
+                            <i class="fas fa-clock"></i>
+                            <h5>2. Processing</h5>
+                            <p>Request is processed within 24-48 hours</p>
+                        </div>
+                        <div class="process-step">
+                            <i class="fas fa-exchange-alt"></i>
+                            <h5>3. Funds Transfer</h5>
+                            <p>Once approved, funds are transferred to your bank account</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-history me-2"></i>Recent Withdrawals</span>
+                        <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div id="recentWithdrawals">
+                            <div class="text-center py-3">
+                                <div class="loading"></div>
+                                <p class="mt-2">Loading transactions...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="note-highlight mt-4">
+                    <h6><i class="fas fa-exclamation-circle me-2"></i>Important Notes</h6>
+                    <ul class="small ps-3 mb-0">
+                        <li>Withdrawals are processed Monday to Friday between 9am-5pm</li>
+                        <li>Ensure your bank account details are correct to avoid delays</li>
+                        <li>A minimum of ₦100.00 is required for withdrawals</li>
+                        <li>You will receive email and SMS notifications at each stage</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5>Pocket Investie</h5>
+                    <p>"Invest Smart, Grow Your Wealth" - A secure Naira-based investment platform.</p>
+                </div>
+                <div class="col-lg-2 mb-4">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled footer-links">
+                        <li><a href="dashboard.html">Dashboard</a></li>
+                        <li><a href="invest.html">Investments</a></li>
+                        <li><a href="deposit.html">Deposit Funds</a></li>
+                        <li><a href="withdraw.html">Withdraw Funds</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 mb-4">
+                    <h5>Legal</h5>
+                    <ul class="list-unstyled footer-links">
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Investment Policy</a></li>
+                        <li><a href="#">Risk Disclosure</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <h5>Support</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-envelope me-2"></i> victorexbinarysignalbot@gmail.com</li>
+                        <li><i class="fas fa-phone me-2"></i> +234 706 279 1952</li>
+                        <li><i class="fas fa-comment me-2"></i> Live Chat: 24/7</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="mt-4 mb-4" style="border-color: rgba(255,255,255,0.1)">
+            <div class="text-center">
+                <p class="mb-0">©2025 Pocket Investie. Founded and managed by Victorex Binary Option Traders. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase and Paystack Integration -->
+    <script>
+        // Firebase configuration (replace with your actual config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
+            authDomain: "pocket-investie.firebaseapp.com",
+            projectId: "pocket-investie",
+            storageBucket: "pocket-investie.firebasestorage.app",
+            messagingSenderId: "246875262393",
+            appId: "1:246875262393:web:f0468ca3f1da95f4b4fa68"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Paystack configuration (replace with your actual keys)
+        const paystackPublicKey = "pk_live_d99488acf1205e97b3cfb64588f262d0d6ca3c9d";
+        const paystackSecretKey = "sk_live_8c55da089f3e06ead7e2ca4e0e9e1c217de6ed53"; // Never expose this in production!
+
+        let currentUser = null;
+        let banks = [];
+        let bankCodes = {};
+        let userData = {};
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            // Remove toast after it hides
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+
+        // Initialize authentication state listener
+        function initAuth() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    document.getElementById('userWelcome').textContent = `Welcome, ${user.displayName || user.email}!`;
+                    fetchUserData();
+                    fetchBanks();
+                    loadRecentWithdrawals();
+                } else {
+                    // Redirect to login page if not authenticated
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        // Fetch user data from Firestore
+        function fetchUserData() {
+            if (!currentUser) return;
+            
+            db.collection("users").doc(currentUser.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        userData = doc.data();
+                        document.getElementById("availableBalance").textContent = `₦${(userData.balance || 0).toLocaleString()}`;
+                        document.getElementById("pendingWithdrawals").textContent = `₦${(userData.pendingWithdrawals || 0).toLocaleString()}`;
+                        document.getElementById("totalWithdrawn").textContent = `₦${(userData.totalWithdrawn || 0).toLocaleString()}`;
+                    } else {
+                        // Create user document if it doesn't exist
+                        const userDoc = {
+                            uid: currentUser.uid,
+                            email: currentUser.email,
+                            displayName: currentUser.displayName || "User",
+                            balance: 0,
+                            pendingWithdrawals: 0,
+                            totalWithdrawn: 0,
+                            createdAt: new Date(),
+                            lastLogin: new Date()
+                        };
+                        
+                        db.collection("users").doc(currentUser.uid).set(userDoc)
+                            .then(() => {
+                                userData = userDoc;
+                                document.getElementById("availableBalance").textContent = `₦0.00`;
+                                document.getElementById("pendingWithdrawals").textContent = `₦0.00`;
+                                document.getElementById("totalWithdrawn").textContent = `₦0.00`;
+                            })
+                            .catch((error) => {
+                                console.error("Error creating user document:", error);
+                                showToast("Error initializing user account", "danger");
+                            });
+                    }
+                })
+                .catch((error) => {
+                    console.log("Error getting document:", error);
+                    showToast("Error fetching user data", "danger");
+                });
+        }
+
+        // Fetch banks from Paystack
+        async function fetchBanks() {
+            try {
+                const response = await fetch('https://api.paystack.co/bank', {
+                    headers: {
+                        'Authorization': `Bearer ${paystackSecretKey}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status) {
+                    banks = data.data;
+                    populateBankDropdown();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                console.error("Error fetching banks:", error);
+                showToast("Error loading bank list", "danger");
+                document.getElementById("bank").innerHTML = '<option value="" selected disabled>Error loading banks</option>';
+            }
+        }
+
+        // Populate bank dropdown
+        function populateBankDropdown() {
+            const bankSelect = document.getElementById("bank");
+            bankSelect.innerHTML = '<option value="" selected disabled>Select your bank</option>';
+            
+            banks.forEach(bank => {
+                const option = document.createElement("option");
+                option.value = bank.code;
+                option.textContent = bank.name;
+                option.setAttribute('data-bank-id', bank.id);
+                bankSelect.appendChild(option);
+                
+                // Store bank code for later use
+                bankCodes[bank.code] = bank.name;
+            });
+        }
+
+        // Verify account number with Paystack
+        async function verifyAccountNumber(accountNumber, bankCode) {
+            if (!accountNumber || !bankCode || accountNumber.length < 10) return;
+            
+            document.getElementById("accountVerifyStatus").innerHTML = '<span class="text-info">Verifying account...</span>';
+            
+            try {
+                const response = await fetch(`https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`, {
+                    headers: {
+                        'Authorization': `Bearer ${paystackSecretKey}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status) {
+                    document.getElementById("accountName").value = data.data.account_name;
+                    document.getElementById("accountVerifyStatus").innerHTML = '<span class="text-success">Account verified</span>';
+                    return data.data.account_name;
+                } else {
+                    document.getElementById("accountName").value = "";
+                    document.getElementById("accountVerifyStatus").innerHTML = '<span class="text-danger">Account verification failed</span>';
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                console.error("Error verifying account:", error);
+                showToast("Account verification failed", "danger");
+                return null;
+            }
+        }
+
+        // Handle withdrawal form submission
+        async function handleWithdrawalFormSubmit(e) {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                showToast("Please log in to continue", "warning");
+                return;
+            }
+            
+            const amount = parseFloat(document.getElementById("amount").value);
+            const bankCode = document.getElementById("bank").value;
+            const bankName = bankCodes[bankCode] || "Unknown Bank";
+            const accountNumber = document.getElementById("accountNumber").value;
+            const accountName = document.getElementById("accountName").value;
+            
+            // Validate minimum amount
+            if (amount < 100) {
+                showToast("Minimum withdrawal amount is ₦100.00", "warning");
+                return;
+            }
+            
+            // Check if user has sufficient balance
+            if (amount > (userData.balance || 0)) {
+                showToast("Insufficient balance for this withdrawal", "warning");
+                return;
+            }
+            
+            // Validate account details
+            if (!accountName) {
+                showToast("Please verify your account details first", "warning");
+                return;
+            }
+            
+            // Disable submit button to prevent multiple submissions
+            const submitBtn = document.getElementById("submitBtn");
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span> Processing...';
+            
+            try {
+                // Create withdrawal request in Firestore
+                const withdrawalData = {
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    amount: amount,
+                    bankCode: bankCode,
+                    bankName: bankName,
+                    accountNumber: accountNumber,
+                    accountName: accountName,
+                    status: "pending",
+                    createdAt: new Date(),
+                    processedAt: null
+                };
+                
+                const docRef = await db.collection("withdrawals").add(withdrawalData);
+                console.log("Withdrawal request created with ID: ", docRef.id);
+                
+                // Update user balance (subtract withdrawal amount)
+                await db.collection("users").doc(currentUser.uid).update({
+                    balance: firebase.firestore.FieldValue.increment(-amount),
+                    pendingWithdrawals: firebase.firestore.FieldValue.increment(amount)
+                });
+                
+                // Update local user data
+                userData.balance = (userData.balance || 0) - amount;
+                userData.pendingWithdrawals = (userData.pendingWithdrawals || 0) + amount;
+                
+                // Update UI
+                document.getElementById("availableBalance").textContent = `₦${(userData.balance || 0).toLocaleString()}`;
+                document.getElementById("pendingWithdrawals").textContent = `₦${(userData.pendingWithdrawals || 0).toLocaleString()}`;
+                
+                // Simulate processing delay (24-48 hours)
+                setTimeout(async () => {
+                    try {
+                        // Create transfer recipient
+                        const recipientCode = await createRecipient(accountNumber, bankCode, accountName);
+                        
+                        // Initiate transfer
+                        const transfer = await initiateTransfer(recipientCode, amount, `Withdrawal from Pocket Investie`);
+                        
+                        // Update withdrawal record with transfer details
+                        await db.collection("withdrawals").doc(docRef.id).update({
+                            status: transfer.status === "success" ? "completed" : "failed",
+                            transferReference: transfer.reference,
+                            processedAt: new Date()
+                        });
+                        
+                        // Update user's total withdrawn if successful
+                        if (transfer.status === "success") {
+                            await db.collection("users").doc(currentUser.uid).update({
+                                pendingWithdrawals: firebase.firestore.FieldValue.increment(-amount),
+                                totalWithdrawn: firebase.firestore.FieldValue.increment(amount)
+                            });
+                            
+                            // Update local user data
+                            userData.pendingWithdrawals = (userData.pendingWithdrawals || 0) - amount;
+                            userData.totalWithdrawn = (userData.totalWithdrawn || 0) + amount;
+                            
+                            // Update UI
+                            document.getElementById("pendingWithdrawals").textContent = `₦${(userData.pendingWithdrawals || 0).toLocaleString()}`;
+                            document.getElementById("totalWithdrawn").textContent = `₦${(userData.totalWithdrawn || 0).toLocaleString()}`;
+                            
+                            showToast("Withdrawal processed successfully! Funds have been transferred to your bank account.", "success");
+                        } else {
+                            // If transfer failed, return funds to user's balance
+                            await db.collection("users").doc(currentUser.uid).update({
+                                balance: firebase.firestore.FieldValue.increment(amount),
+                                pendingWithdrawals: firebase.firestore.FieldValue.increment(-amount)
+                            });
+                            
+                            // Update local user data
+                            userData.balance = (userData.balance || 0) + amount;
+                            userData.pendingWithdrawals = (userData.pendingWithdrawals || 0) - amount;
+                            
+                            // Update UI
+                            document.getElementById("availableBalance").textContent = `₦${(userData.balance || 0).toLocaleString()}`;
+                            document.getElementById("pendingWithdrawals").textContent = `₦${(userData.pendingWithdrawals || 0).toLocaleString()}`;
+                            
+                            showToast("Withdrawal failed. Please try again or contact support.", "danger");
+                        }
+                        
+                        // Refresh recent withdrawals
+                        loadRecentWithdrawals();
+                    } catch (error) {
+                        console.error("Error processing withdrawal:", error);
+                        
+                        // If processing fails, return funds to user's balance
+                        await db.collection("users").doc(currentUser.uid).update({
+                            balance: firebase.firestore.FieldValue.increment(amount),
+                            pendingWithdrawals: firebase.firestore.FieldValue.increment(-amount)
+                        });
+                        
+                        // Update local user data
+                        userData.balance = (userData.balance || 0) + amount;
+                        userData.pendingWithdrawals = (userData.pendingWithdrawals || 0) - amount;
+                        
+                        // Update UI
+                        document.getElementById("availableBalance").textContent = `₦${(userData.balance || 0).toLocaleString()}`;
+                        document.getElementById("pendingWithdrawals").textContent = `₦${(userData.pendingWithdrawals || 0).toLocaleString()}`;
+                        
+                        // Update withdrawal status to failed
+                        await db.collection("withdrawals").doc(docRef.id).update({
+                            status: "failed",
+                            processedAt: new Date()
+                        });
+                        
+                        showToast("Withdrawal processing failed. Funds have been returned to your account.", "danger");
+                    }
+                }, 5000); // Simulating 5 seconds for demo (would be 24-48 hours in production)
+                
+                showToast("Withdrawal request submitted successfully! It will be processed within 24-48 hours.", "success");
+                
+                // Reset form
+                document.getElementById("withdrawalForm").reset();
+                
+            } catch (error) {
+                console.error("Error processing withdrawal:", error);
+                showToast("Error processing withdrawal: " + error.message, "danger");
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Request Withdrawal';
+            }
+        }
+
+        // Create transfer recipient
+        async function createRecipient(accountNumber, bankCode, accountName) {
+            try {
+                const response = await fetch('https://api.paystack.co/transferrecipient', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${paystackSecretKey}`
+                    },
+                    body: JSON.stringify({
+                        type: 'nuban',
+                        name: accountName,
+                        account_number: accountNumber,
+                        bank_code: bankCode,
+                        currency: 'NGN'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status) {
+                    return data.data.recipient_code;
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                console.error("Error creating recipient:", error);
+                throw error;
+            }
+        }
+
+        // Initiate Paystack transfer
+        async function initiateTransfer(recipientCode, amount, reason) {
+            try {
+                const response = await fetch('https://api.paystack.co/transfer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${paystackSecretKey}`
+                    },
+                    body: JSON.stringify({
+                        source: 'balance',
+                        reason: reason,
+                        amount: amount * 100, // Paystack uses kobo
+                        recipient: recipientCode
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status) {
+                    return data.data;
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                console.error("Error initiating transfer:", error);
+                throw error;
+            }
+        }
+
+        // Load recent withdrawals
+        function loadRecentWithdrawals() {
+            if (!currentUser) return;
+            
+            db.collection("withdrawals")
+                .where("userId", "==", currentUser.uid)
+                .orderBy("createdAt", "desc")
+                .limit(5)
+                .get()
+                .then((querySnapshot) => {
+                    const recentWithdrawals = document.getElementById("recentWithdrawals");
+                    recentWithdrawals.innerHTML = "";
+                    
+                    if (querySnapshot.empty) {
+                        recentWithdrawals.innerHTML = '<p class="text-center py-3">No withdrawal history found</p>';
+                        return;
+                    }
+                    
+                    querySnapshot.forEach((doc) => {
+                        const withdrawal = doc.data();
+                        const date = withdrawal.createdAt.toDate();
+                        const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        
+                        let statusClass = 'status-pending';
+                        if (withdrawal.status === 'completed') statusClass = 'status-completed';
+                        else if (withdrawal.status === 'processing') statusClass = 'status-processing';
+                        else if (withdrawal.status === 'failed') statusClass = 'status-failed';
+                        
+                        const transactionElement = document.createElement("div");
+                        transactionElement.className = "transaction-row";
+                        transactionElement.innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>₦${withdrawal.amount.toLocaleString()}</strong>
+                                    <p class="mb-0 small">${withdrawal.bankName} • ${withdrawal.accountNumber}</p>
+                                </div>
+                                <div class="text-end">
+                                    <div class="status-badge ${statusClass}">${withdrawal.status}</div>
+                                    <p class="mb-0 small">${formattedDate}</p>
+                                </div>
+                            </div>
+                        `;
+                        
+                        recentWithdrawals.appendChild(transactionElement);
+                    });
+                })
+                .catch((error) => {
+                    console.log("Error getting withdrawals: ", error);
+                    document.getElementById("recentWithdrawals").innerHTML = '<p class="text-center py-3 text-danger">Error loading transactions</p>';
+                });
+        }
+
+        // Initialize the page
+        document.addEventListener("DOMContentLoaded", function() {
+            initAuth();
+            
+            // Event listener for account number verification
+            document.getElementById("accountNumber").addEventListener("blur", function() {
+                const bankCode = document.getElementById("bank").value;
+                const accountNumber = this.value;
+                
+                if (bankCode && accountNumber.length === 10) {
+                    verifyAccountNumber(accountNumber, bankCode);
+                }
+            });
+            
+            // Event listener for bank change
+            document.getElementById("bank").addEventListener("change", function() {
+                const accountNumber = document.getElementById("accountNumber").value;
+                
+                if (accountNumber.length === 10) {
+                    verifyAccountNumber(accountNumber, this.value);
+                }
+            });
+            
+            // Form submission handler
+            document.getElementById("withdrawalForm").addEventListener("submit", handleWithdrawalFormSubmit);
+            
+            // Logout handler
+            document.getElementById("logoutBtn").addEventListener("click", function() {
+                auth.signOut().then(() => {
+                    window.location.href = 'login.html';
+                }).catch((error) => {
+                    console.error("Logout error:", error);
+                    showToast("Error during logout", "danger");
+                });
+            });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
