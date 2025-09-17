@@ -3,11 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deposit Funds - Pocket Investie</title>
-    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <title>Pocket Investie - Deposit Funds</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase App (core Firebase SDK) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <!-- Firebase Firestore -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase Auth -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <!-- Paystack Inline JS -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <style>
         * {
             margin: 0;
@@ -17,309 +22,572 @@
         }
         
         body {
-            background: linear-gradient(135deg, #dc2430, #7b4397);
-            color: #fff;
+            background: linear-gradient(135deg, #ff7e5f, #feb47b, #6a11cb, #2575fc);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #333;
             min-height: 100vh;
             padding: 20px;
         }
         
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
+        /* Header Styles */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 0;
-            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
         
         .logo {
-            font-size: 24px;
-            font-weight: bold;
             display: flex;
             align-items: center;
         }
         
+        .logo h1 {
+            font-size: 28px;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-left: 10px;
+        }
+        
         .logo-icon {
-            background: #fff;
-            color: #dc2430;
-            width: 40px;
-            height: 40px;
+            font-size: 32px;
+            color: #6a11cb;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 10px;
+            color: white;
+            font-size: 20px;
+            margin-right: 15px;
         }
         
-        .nav-links {
+        .notification-bell {
+            font-size: 24px;
+            color: #6a11cb;
+            margin: 0 20px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
             display: flex;
-            gap: 20px;
-        }
-        
-        .nav-link {
-            color: #fff;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            transition: all 0.3s ease;
-        }
-        
-        .nav-link:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-        
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-        }
-        
-        .balance-card {
-            display: flex;
-            flex-direction: column;
+            align-items: center;
             justify-content: center;
         }
         
-        .card-title {
-            font-size: 16px;
-            margin-bottom: 15px;
-            opacity: 0.8;
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
-        .balance-amount {
-            font-size: 36px;
-            font-weight: bold;
+        nav a {
+            text-decoration: none;
+            color: #2c3e50;
+            padding: 12px 25px;
+            margin: 0 10px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        nav a:hover, nav a.active {
+            background: linear-gradient(90deg, rgba(106, 17, 203, 0.1), rgba(37, 117, 252, 0.1));
+            color: #6a11cb;
+        }
+        
+        nav a i {
+            margin-right: 8px;
+        }
+        
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .page-title {
+            font-size: 24px;
+            color: #2c3e50;
+        }
+        
+        /* Main Content */
+        .deposit-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
             margin-bottom: 20px;
         }
         
+        /* Deposit Form */
         .deposit-form {
-            display: flex;
-            flex-direction: column;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-title {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-bottom: 20px;
         }
         
         .form-group {
             margin-bottom: 20px;
         }
         
-        label {
+        .form-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
+            color: #2c3e50;
         }
         
-        input {
+        .form-group input, .form-group select {
             width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
             font-size: 16px;
+            transition: all 0.3s ease;
         }
         
-        .btn {
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #6a11cb;
+            box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+        }
+        
+        .amount-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .amount-option {
             padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
         }
         
+        .amount-option:hover {
+            border-color: #6a11cb;
+        }
+        
+        .amount-option.selected {
+            border-color: #6a11cb;
+            background: rgba(106, 17, 203, 0.1);
+        }
+        
+        .amount-option .amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        
+        .amount-option .bonus {
+            font-size: 14px;
+            color: #2ecc71;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            width: 100%;
+        }
+        
         .btn-primary {
-            background: #ff6b6b;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
             color: white;
         }
         
         .btn-primary:hover {
-            background: #ff5252;
-            transform: translateY(-2px);
-        }
-        
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-        
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 30px;
-        }
-        
-        .action-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            text-decoration: none;
-            color: white;
-            transition: all 0.3s ease;
-        }
-        
-        .action-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
             transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
-        .action-icon {
-            font-size: 24px;
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* Deposit Info */
+        .deposit-info {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-title {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .info-card {
+            background: linear-gradient(90deg, rgba(106, 17, 203, 0.1), rgba(37, 117, 252, 0.1));
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .info-card h3 {
+            color: #6a11cb;
             margin-bottom: 10px;
         }
         
-        .transaction-history {
-            margin-top: 40px;
+        .info-list {
+            list-style: none;
         }
         
-        .transaction-item {
+        .info-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(106, 17, 203, 0.1);
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .info-list li i {
+            color: #6a11cb;
+            margin-right: 10px;
+        }
+        
+        /* Recent Deposits */
+        .recent-deposits {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            grid-column: 1 / -1;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: #2c3e50;
+        }
+        
+        .deposit-item {
             display: flex;
             justify-content: space-between;
             padding: 15px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid #f1f2f6;
         }
         
-        .transaction-amount {
-            font-weight: bold;
+        .deposit-details {
+            flex: 1;
         }
         
-        .deposit {
-            color: #4cd964;
+        .deposit-amount {
+            font-weight: 700;
+            font-size: 18px;
+            color: #2ecc71;
         }
         
-        .withdrawal {
-            color: #ff3b30;
+        .deposit-date {
+            font-size: 14px;
+            color: #7f8c8d;
         }
         
+        .deposit-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .completed {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+        }
+        
+        .pending {
+            background: rgba(241, 196, 15, 0.2);
+            color: #f39c12;
+        }
+        
+        /* Footer */
         footer {
             text-align: center;
-            padding: 30px 0;
-            margin-top: 40px;
-            opacity: 0.7;
-            font-size: 14px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            color: #7f8c8d;
         }
         
-        .error {
-            color: #ff6b6b;
-            margin-top: 5px;
-            font-size: 14px;
-            display: none;
+        /* Loading States */
+        .loading {
+            color: #7f8c8d;
+            text-align: center;
+            padding: 20px;
         }
         
-        .success-message {
-            background: rgba(76, 217, 100, 0.2);
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            display: none;
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .deposit-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            nav {
+                flex-wrap: wrap;
+            }
+            
+            nav a {
+                margin-bottom: 10px;
+            }
+            
+            .amount-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                align-items: flex-end;
+            }
+            
+            .user-details {
+                margin-top: 10px;
+                text-align: right;
+            }
+        }
+        
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2ecc71;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .toast.error {
+            background: #ff4757;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <header>
             <div class="logo">
-                <div class="logo-icon">📈</div>
-                Pocket Investie
+                <i class="fas fa-piggy-bank logo-icon"></i>
+                <h1>Pocket Investie</h1>
             </div>
-            <div class="nav-links">
-                <a href="dashboard.html" class="nav-link">Dashboard</a>
-                <a href="profile.html" class="nav-link">Profile</a>
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                    <div id="userName">Loading...</div>
+                    <div id="userEmail" style="font-size: 14px; color: #7f8c8d;">Loading...</div>
+                </div>
+                <div class="notification-bell" id="notificationBell">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </div>
             </div>
         </header>
         
-        <div class="main-content">
-            <div class="card balance-card">
-                <div class="card-title">YOUR CURRENT BALANCE</div>
-                <div class="balance-amount" id="walletBalance">₦0.00</div>
-                <div class="card-title">RECENT TRANSACTIONS</div>
-                <div class="transaction-item">
-                    <div class="transaction-details">
-                        <div>Deposit</div>
-                        <div class="transaction-date">Today</div>
-                    </div>
-                    <div class="transaction-amount deposit">+ ₦0.00</div>
+        <!-- Navigation -->
+        <nav>
+            <a href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="invest.html"><i class="fas fa-chart-line"></i> My Investments</a>
+            <a href="deposit.html" class="active"><i class="fas fa-plus-circle"></i> Deposit Funds</a>
+            <a href="withdraw.html"><i class="fas fa-money-bill-wave"></i> Withdraw Funds</a>
+            <a href="transaction.html"><i class="fas fa-exchange-alt"></i> Transactions</a>
+            <a href="profile.html"><i class="fas fa-user-cog"></i> Account Settings</a>
+            <a href="#" id="supportLink"><i class="fas fa-headset"></i> Customer Support</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <h2 class="page-title">Deposit Funds</h2>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="deposit-content">
+            <!-- Deposit Form -->
+            <div class="deposit-form">
+                <h3 class="form-title">Add Funds to Your Wallet</h3>
+                
+                <div class="form-group">
+                    <label for="amount">Amount (₦)</label>
+                    <input type="number" id="amount" placeholder="Enter amount" min="1000" required>
                 </div>
-                <div class="transaction-item">
-                    <div class="transaction-details">
-                        <div>Investment</div>
-                        <div class="transaction-date">Yesterday</div>
+                
+                <div class="amount-options">
+                    <div class="amount-option" data-amount="5000">
+                        <div class="amount">₦5,000</div>
                     </div>
-                    <div class="transaction-amount withdrawal">- ₦0.00</div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-title">MAKE A DEPOSIT</div>
-                <div class="deposit-form">
-                    <div class="form-group">
-                        <label for="amount">Amount (Minimum: ₦100)</label>
-                        <input type="number" id="amount" placeholder="Enter amount" min="100">
-                        <div class="error" id="amountError">Please enter at least ₦100</div>
+                    <div class="amount-option" data-amount="10000">
+                        <div class="amount">₦10,000</div>
+                        <div class="bonus">+1% bonus</div>
                     </div>
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" placeholder="Your email address">
-                        <div class="error" id="emailError">Please enter a valid email</div>
+                    <div class="amount-option" data-amount="20000">
+                        <div class="amount">₦20,000</div>
+                        <div class="bonus">+2% bonus</div>
                     </div>
-                    <button class="btn btn-primary" onclick="handleDeposit()">Deposit Now</button>
-                    
-                    <div class="success-message" id="successMessage">
-                        Deposit successful! Your balance will be updated shortly.
+                    <div class="amount-option" data-amount="50000">
+                        <div class="amount">₦50,000</div>
+                        <div class="bonus">+5% bonus</div>
                     </div>
                 </div>
                 
-                <div class="quick-actions">
-                    <a href="dashboard.html" class="action-btn">
-                        <div class="action-icon">📊</div>
-                        <div>Dashboard</div>
-                    </a>
-                    <a href="withdraw.html" class="action-btn">
-                        <div class="action-icon">💸</div>
-                        <div>Withdraw</div>
-                    </a>
-                    <a href="invest.html" class="action-btn">
-                        <div class="action-icon">📈</div>
-                        <div>Invest</div>
-                    </a>
-                    <a href="profile.html" class="action-btn">
-                        <div class="action-icon">👤</div>
-                        <div>Profile</div>
+                <div class="form-group">
+                    <label for="paymentMethod">Payment Method</label>
+                    <select id="paymentMethod">
+                        <option value="card">Debit/Credit Card</option>
+                        <option value="bank">Bank Transfer</option>
+                        <option value="ussd">USSD</option>
+                    </select>
+                </div>
+                
+                <button id="depositBtn" class="btn btn-primary">
+                    <i class="fas fa-lock"></i> Proceed to Payment
+                </button>
+            </div>
+            
+            <!-- Deposit Information -->
+            <div class="deposit-info">
+                <h3 class="info-title">Deposit Information</h3>
+                
+                <div class="info-card">
+                    <h3>Current Balance</h3>
+                    <div class="balance-amount" id="currentBalance">₦0.00</div>
+                </div>
+                
+                <div class="info-list">
+                    <li><i class="fas fa-check-circle"></i> Instant deposits</li>
+                    <li><i class="fas fa-check-circle"></i> No hidden fees</li>
+                    <li><i class="fas fa-check-circle"></i> Secure payments</li>
+                    <li><i class="fas fa-check-circle"></i> 24/7 support</li>
+                </div>
+                
+                <div class="info-card">
+                    <h3>Bonuses</h3>
+                    <p>Get up to 5% bonus on deposits over ₦10,000. Higher deposits earn higher bonuses!</p>
+                </div>
+            </div>
+            
+            <!-- Recent Deposits -->
+            <div class="recent-deposits">
+                <div class="section-header">
+                    <h3 class="section-title">Recent Deposits</h3>
+                </div>
+                <div id="recentDepositsList">
+                    <div class="loading">Loading recent deposits...</div>
+                </div>
+            </div>
         </div>
         
+        <!-- Footer -->
         <footer>
             <p>© 2025 Pocket Investie. All rights reserved.</p>
-            <p>Developed and managed by Victorex Binary Option Traders</p>
         </footer>
+        
+        <!-- Toast Notification -->
+        <div class="toast" id="toast">
+            <i class="fas fa-check-circle"></i>
+            <span id="toastMessage">Operation completed successfully</span>
+        </div>
     </div>
 
     <script>
-        // Firebase configuration
+        // Firebase configuration (replace with your actual config)
         const firebaseConfig = {
             apiKey: "AIzaSyDQ8AejmnXU8lO1mHdMNoL8G85nmxnYn_A",
             authDomain: "pocket-investie.firebaseapp.com",
@@ -337,116 +605,306 @@
         // Paystack public key (replace with your actual key)
         const paystackPublicKey = "pk_live_d99488acf1205e97b3cfb64588f262d0d6ca3c9d";
         
-        // Current user data
-        let currentUser = null;
+        // DOM Elements
+        const userNameElement = document.getElementById('userName');
+        const userEmailElement = document.getElementById('userEmail');
+        const currentBalanceElement = document.getElementById('currentBalance');
+        const amountInput = document.getElementById('amount');
+        const amountOptions = document.querySelectorAll('.amount-option');
+        const depositBtn = document.getElementById('depositBtn');
+        const recentDepositsList = document.getElementById('recentDepositsList');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const supportLink = document.getElementById('supportLink');
         
-        // Check if user is logged in
-        auth.onAuthStateChanged((user) => {
+        // Current user data
+        let userId = null;
+        let userData = null;
+        
+        // Check authentication state
+        auth.onAuthStateChanged(user => {
             if (user) {
-                currentUser = user;
-                document.getElementById('email').value = user.email;
-                loadUserData(user.uid);
+                // User is signed in
+                userId = user.uid;
+                userNameElement.textContent = user.displayName || 'User';
+                userEmailElement.textContent = user.email;
+                
+                // Fetch user data from Firestore
+                fetchUserData(userId);
+                fetchRecentDeposits(userId);
             } else {
-                // Redirect to login if not authenticated
-                window.location.href = "login.html";
+                // User is signed out, redirect to auth page
+                window.location.href = 'auth.html';
             }
         });
         
-        // Load user data from Firestore
-        function loadUserData(uid) {
-            db.collection("users").doc(uid).get()
-            .then((doc) => {
+        // Fetch user data from Firestore
+        function fetchUserData(userId) {
+            db.collection('users').doc(userId).get()
+            .then(doc => {
                 if (doc.exists) {
-                    const userData = doc.data();
-                    document.getElementById('userBalance').textContent = `₦${userData.balance.toLocaleString()}`;
+                    userData = doc.data();
+                    currentBalanceElement.textContent = `₦${userData.currentBalance?.toLocaleString('en-US') || '0.00'}`;
+                } else {
+                    console.log("No such document!");
                 }
             })
-            .catch((error) => {
+            .catch(error => {
                 console.log("Error getting document:", error);
             });
         }
         
-        // Handle deposit process
-        function handleDeposit() {
-            const amount = document.getElementById('amount').value;
-            const email = document.getElementById('email').value;
+        // Fetch recent deposits from Firestore
+        function fetchRecentDeposits(userId) {
+            db.collection('transactions')
+            .where('userId', '==', userId)
+            .where('type', '==', 'deposit')
+            .orderBy('transactionDate', 'desc')
+            .limit(5)
+            .get()
+            .then(querySnapshot => {
+                if (querySnapshot.empty) {
+                    recentDepositsList.innerHTML = '<div class="loading">No recent deposits found</div>';
+                    return;
+                }
+                
+                let depositsHTML = '';
+                querySnapshot.forEach(doc => {
+                    const deposit = doc.data();
+                    const date = deposit.transactionDate?.toDate() || new Date();
+                    
+                    depositsHTML += `
+                        <div class="deposit-item">
+                            <div class="deposit-details">
+                                <div class="deposit-amount">+₦${deposit.amount?.toLocaleString('en-US')}</div>
+                                <div class="deposit-date">${date.toLocaleString()}</div>
+                            </div>
+                            <div class="deposit-status ${deposit.status}">${deposit.status}</div>
+                        </div>
+                    `;
+                });
+                
+                recentDepositsList.innerHTML = depositsHTML;
+            })
+            .catch(error => {
+                console.log("Error getting deposits:", error);
+                recentDepositsList.innerHTML = '<div class="loading">Error loading recent deposits</div>';
+            });
+        }
+        
+        // Amount option selection
+        amountOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                amountOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                const amount = option.getAttribute('data-amount');
+                amountInput.value = amount;
+            });
+        });
+        
+        // Deposit button click handler
+        depositBtn.addEventListener('click', () => {
+            const amount = parseInt(amountInput.value);
             
-            // Reset errors
-            document.getElementById('amountError').style.display = 'none';
-            document.getElementById('emailError').style.display = 'none';
-            
-            // Validate inputs
-            let isValid = true;
-            
+            // Validate amount
             if (!amount || amount < 100) {
-                document.getElementById('amountError').style.display = 'block';
-                isValid = false;
+                showToast('Please enter a valid amount (minimum ₦100)', true);
+                return;
             }
             
-            if (!email || !email.includes('@')) {
-                document.getElementById('emailError').style.display = 'block';
-                isValid = false;
+            // Initialize payment with Paystack
+            initializePayment(amount);
+        });
+        
+        // Initialize Paystack payment
+        function initializePayment(amount) {
+            // For demo purposes, we're using a test implementation
+            // In a real app, you would use the Paystack API
+            
+            // Show processing state
+            depositBtn.disabled = true;
+            depositBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            // Simulate payment processing
+            setTimeout(() => {
+                // In a real implementation, you would:
+                // 1. Create a transaction record with status 'pending'
+                // 2. Initialize Paystack payment
+                // 3. Handle the callback
+                
+                // For demo, we'll simulate a successful payment
+                simulateSuccessfulPayment(amount);
+            }, 2000);
+        }
+        
+        // Simulate successful payment (for demo purposes)
+        function simulateSuccessfulPayment(amount) {
+            // Create transaction reference
+            const ref = 'DEP_' + Date.now();
+            
+            // Create transaction data
+            const transactionData = {
+                userId: userId,
+                type: 'deposit',
+                amount: amount,
+                currency: 'NGN',
+                status: 'completed',
+                description: `Deposit via Card`,
+                paymentMethod: 'card',
+                transactionDate: new Date(),
+                processedAt: new Date(),
+                referenceId: ref
+            };
+            
+            // Add transaction to Firestore
+            db.collection('transactions').add(transactionData)
+            .then(() => {
+                // Update user balance
+                const newBalance = (userData.currentBalance || 0) + amount;
+                
+                db.collection('users').doc(userId).update({
+                    currentBalance: newBalance,
+                    totalDeposits: (userData.totalDeposits || 0) + amount,
+                    lastUpdated: new Date()
+                })
+                .then(() => {
+                    // Show success message
+                    showToast(`Deposit of ₦${amount.toLocaleString('en-US')} successful!`);
+                    
+                    // Reset form
+                    amountInput.value = '';
+                    amountOptions.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Update UI
+                    currentBalanceElement.textContent = `₦${newBalance.toLocaleString('en-US')}`;
+                    
+                    // Refresh recent deposits
+                    fetchRecentDeposits(userId);
+                })
+                .catch(error => {
+                    console.error("Error updating user balance:", error);
+                    showToast("Error updating balance. Please contact support.", true);
+                });
+            })
+            .catch(error => {
+                console.error("Error adding transaction:", error);
+                showToast("Error recording transaction. Please contact support.", true);
+            })
+            .finally(() => {
+                // Reset button state
+                depositBtn.disabled = false;
+                depositBtn.innerHTML = '<i class="fas fa-lock"></i> Proceed to Payment';
+            });
+        }
+        
+        // Show toast notification
+        function showToast(message, isError = false) {
+            toastMessage.textContent = message;
+            
+            if (isError) {
+                toast.classList.add('error');
+                toast.querySelector('i').className = 'fas fa-exclamation-circle';
+            } else {
+                toast.classList.remove('error');
+                toast.querySelector('i').className = 'fas fa-check-circle';
             }
             
-            if (!isValid) return;
+            toast.classList.add('show');
             
-            // Initiate payment with Paystack
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Logout functionality
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            auth.signOut().then(() => {
+                window.location.href = 'auth.html';
+            });
+        });
+        
+        // Support link
+        supportLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('Our customer support team is available 24/7. Please email support@pocketinvestie.com or use the live chat feature.');
+        });
+        
+        // Real Paystack implementation (commented out for demo)
+        /*
+        function initializePaystackPayment(amount, email, ref) {
             const handler = PaystackPop.setup({
                 key: paystackPublicKey,
                 email: email,
                 amount: amount * 100, // Convert to kobo
                 currency: 'NGN',
-                ref: '' + Math.floor((Math.random() * 1000000000) + 1),
-                onClose: function() {
-                    alert('Transaction was not completed.');
-                },
+                ref: ref,
                 callback: function(response) {
-                    // Payment successful, update Firebase
-                    recordTransaction(amount, response.reference);
+                    // Payment complete - update transaction status
+                    updateTransactionStatus(ref, 'completed', response.reference);
+                    
+                    // Show success message
+                    showToast('Payment successful! Your account has been credited.');
+                    
+                    // Update UI
+                    fetchUserData(userId);
+                    fetchRecentDeposits(userId);
+                },
+                onClose: function() {
+                    // User closed the payment modal
+                    updateTransactionStatus(ref, 'cancelled');
+                    showToast('Payment was cancelled', true);
                 }
             });
             
             handler.openIframe();
         }
         
-        // Record transaction in Firestore
-        function recordTransaction(amount, reference) {
-            const transactionData = {
-                amount: parseFloat(amount),
-                date: new Date(),
-                type: 'deposit',
-                status: 'completed',
-                reference: reference,
-                userId: currentUser.uid
-            };
-            
-            // Add to transactions collection
-            db.collection("transactions").add(transactionData)
-            .then(() => {
-                // Update user balance
-                const userRef = db.collection("users").doc(currentUser.uid);
-                
-                userRef.update({
-                    balance: firebase.firestore.FieldValue.increment(parseFloat(amount))
-                })
-                .then(() => {
-                    // Show success message
-                    document.getElementById('successMessage').style.display = 'block';
+        function updateTransactionStatus(ref, status, paymentRef = null) {
+            db.collection('transactions')
+            .where('referenceId', '==', ref)
+            .get()
+            .then(querySnapshot => {
+                if (!querySnapshot.empty) {
+                    const docId = querySnapshot.docs[0].id;
+                    const updateData = {
+                        status: status,
+                        processedAt: new Date()
+                    };
                     
-                    // Update UI
-                    loadUserData(currentUser.uid);
+                    if (paymentRef) {
+                        updateData.paymentReference = paymentRef;
+                    }
                     
-                    // Clear form
-                    document.getElementById('amount').value = '';
-                })
-                .catch((error) => {
-                    console.error("Error updating balance: ", error);
-                });
-            })
-            .catch((error) => {
-                console.error("Error adding transaction: ", error);
+                    db.collection('transactions').doc(docId).update(updateData);
+                    
+                    // If payment was successful, update user balance
+                    if (status === 'completed') {
+                        const transactionData = querySnapshot.docs[0].data();
+                        updateUserBalance(transactionData.userId, transactionData.amount);
+                    }
+                }
             });
         }
+        
+        function updateUserBalance(userId, amount) {
+            db.collection('users').doc(userId).get()
+            .then(doc => {
+                if (doc.exists) {
+                    const userData = doc.data();
+                    const newBalance = (userData.currentBalance || 0) + amount;
+                    
+                    db.collection('users').doc(userId).update({
+                        currentBalance: newBalance,
+                        totalDeposits: (userData.totalDeposits || 0) + amount,
+                        lastUpdated: new Date()
+                    });
+                }
+            });
+        }
+        */
     </script>
 </body>
 </html>
