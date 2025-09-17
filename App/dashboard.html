@@ -419,6 +419,13 @@
             color: #7f8c8d;
         }
         
+        /* Loading States */
+        .loading {
+            color: #7f8c8d;
+            text-align: center;
+            padding: 20px;
+        }
+        
         /* Responsive Design */
         @media (max-width: 1024px) {
             .dashboard {
@@ -480,6 +487,7 @@
         
         <!-- Advertisement Banner -->
         <div class="ad-banner">
+            <p>🚀 Get 10% bonus on first deposits of over ₦5,000 today only! Limited time offer.</p>
             <p>🚀 Get 5% bonus on deposits over ₦50,000 this week only! Limited time offer.</p>
         </div>
         
@@ -551,20 +559,7 @@
                     <a href="invest.html" class="view-all">View All</a>
                 </div>
                 <div id="investmentsList">
-                    <div class="investment-item">
-                        <div class="investment-details">
-                            <div class="investment-name">Premium Growth Plan</div>
-                            <div class="investment-date">Started: Jan 15, 2025</div>
-                        </div>
-                        <div class="investment-amount">₦150,000</div>
-                    </div>
-                    <div class="investment-item">
-                        <div class="investment-details">
-                            <div class="investment-name">Starter Investment</div>
-                            <div class="investment-date">Started: Dec 5, 2024</div>
-                        </div>
-                        <div class="investment-amount">₦50,000</div>
-                    </div>
+                    <div class="loading">Loading investments...</div>
                 </div>
             </div>
             
@@ -572,23 +567,10 @@
             <div class="transactions-section">
                 <div class="section-header">
                     <h3 class="section-title">Recent Transactions</h3>
-                    <a href="transaction.html" class="view-all">View All</a>
+                    <a href="transactions.html" class="view-all">View All</a>
                 </div>
                 <div id="transactionsList">
-                    <div class="transaction-item">
-                        <div class="transaction-details">
-                            <div class="transaction-type">Deposit</div>
-                            <div class="transaction-date">Feb 10, 2025 14:23</div>
-                        </div>
-                        <div class="transaction-amount positive">+₦50,000</div>
-                    </div>
-                    <div class="transaction-item">
-                        <div class="transaction-details">
-                            <div class="transaction-type">Withdrawal</div>
-                            <div class="transaction-date">Feb 5, 2025 09:45</div>
-                        </div>
-                        <div class="transaction-amount negative">-₦20,000</div>
-                    </div>
+                    <div class="loading">Loading transactions...</div>
                 </div>
             </div>
             
@@ -676,6 +658,8 @@
         const totalInvestedElement = document.getElementById('totalInvested');
         const totalProfitElement = document.getElementById('totalProfit');
         const pendingWithdrawalElement = document.getElementById('pendingWithdrawal');
+        const investmentsListElement = document.getElementById('investmentsList');
+        const transactionsListElement = document.getElementById('transactionsList');
         const notificationBell = document.getElementById('notificationBell');
         const notificationPanel = document.getElementById('notificationPanel');
         const closeNotifications = document.querySelector('.close-notifications');
@@ -691,6 +675,8 @@
                 
                 // Fetch user data from Firestore
                 fetchUserData(user.uid);
+                fetchInvestments(user.uid);
+                fetchTransactions(user.uid);
             } else {
                 // User is signed out, redirect to auth page
                 window.location.href = 'auth.html';
@@ -699,17 +685,125 @@
         
         // Fetch user data from Firestore
         function fetchUserData(userId) {
-            // This is a simulation - replace with actual Firestore calls
-            setTimeout(() => {
-                // Simulated data
-                walletBalanceElement.textContent = '₦175,430.00';
-                totalInvestedElement.textContent = '₦200,000.00';
-                totalProfitElement.textContent = '₦23,450.00';
-                pendingWithdrawalElement.textContent = '₦15,000.00';
+            db.collection('users').doc(userId).get()
+            .then(doc => {
+                if (doc.exists) {
+                    const userData = doc.data();
+                    walletBalanceElement.textContent = `₦${userData.currentBalance?.toLocaleString('en-US') || '0.00'}`;
+                    totalInvestedElement.textContent = `₦${userData.totalInvested?.toLocaleString('en-US') || '0.00'}`;
+                    totalProfitElement.textContent = `₦${userData.totalEarnings?.toLocaleString('en-US') || '0.00'}`;
+                    
+                    // Update welcome message based on time of day
+                    updateWelcomeMessage();
+                } else {
+                    console.log("No such document!");
+                }
+            })
+            .catch(error => {
+                console.log("Error getting document:", error);
+            });
+            
+            // Fetch pending withdrawals
+            db.collection('transactions')
+            .where('userId', '==', userId)
+            .where('type', '==', 'withdrawal')
+            .where('status', '==', 'pending')
+            .get()
+            .then(querySnapshot => {
+                let totalPending = 0;
+                querySnapshot.forEach(doc => {
+                    totalPending += doc.data().amount;
+                });
+                pendingWithdrawalElement.textContent = `₦${totalPending.toLocaleString('en-US')}`;
+            })
+            .catch(error => {
+                console.log("Error getting pending withdrawals:", error);
+            });
+        }
+        
+        // Fetch investments from Firestore
+        function fetchInvestments(userId) {
+            db.collection('investments')
+            .where('userId', '==', userId)
+            .where('status', '==', 'active')
+            .get()
+            .then(querySnapshot => {
+                if (querySnapshot.empty) {
+                    investmentsListElement.innerHTML = '<div class="loading">No active investments found</div>';
+                    return;
+                }
                 
-                // Update welcome message based on time of day
-                updateWelcomeMessage();
-            }, 1000);
+                let investmentsHTML = '';
+                querySnapshot.forEach(doc => {
+                    const investment = doc.data();
+                    investmentsHTML += `
+                        <div class="investment-item">
+                            <div class="investment-details">
+                                <div class="investment-name">${investment.investmentName}</div>
+                                <div class="investment-date">Started: ${investment.startDate?.toDate().toLocaleDateString()}</div>
+                            </div>
+                            <div class="investment-amount">₦${investment.initialAmount?.toLocaleString('en-US')}</div>
+                        </div>
+                    `;
+                });
+                
+                investmentsListElement.innerHTML = investmentsHTML;
+            })
+            .catch(error => {
+                console.log("Error getting investments:", error);
+                investmentsListElement.innerHTML = '<div class="loading">Error loading investments</div>';
+            });
+        }
+        
+        // Fetch transactions from Firestore
+        function fetchTransactions(userId) {
+            db.collection('transactions')
+            .where('userId', '==', userId)
+            .orderBy('transactionDate', 'desc')
+            .limit(5)
+            .get()
+            .then(querySnapshot => {
+                if (querySnapshot.empty) {
+                    transactionsListElement.innerHTML = '<div class="loading">No transactions found</div>';
+                    return;
+                }
+                
+                let transactionsHTML = '';
+                querySnapshot.forEach(doc => {
+                    const transaction = doc.data();
+                    const isPositive = transaction.type === 'deposit' || transaction.type === 'investment_gain';
+                    
+                    transactionsHTML += `
+                        <div class="transaction-item">
+                            <div class="transaction-details">
+                                <div class="transaction-type">${formatTransactionType(transaction.type)}</div>
+                                <div class="transaction-date">${transaction.transactionDate?.toDate().toLocaleString()}</div>
+                            </div>
+                            <div class="transaction-amount ${isPositive ? 'positive' : 'negative'}">
+                                ${isPositive ? '+' : '-'}₦${transaction.amount?.toLocaleString('en-US')}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                transactionsListElement.innerHTML = transactionsHTML;
+            })
+            .catch(error => {
+                console.log("Error getting transactions:", error);
+                transactionsListElement.innerHTML = '<div class="loading">Error loading transactions</div>';
+            });
+        }
+        
+        // Format transaction type for display
+        function formatTransactionType(type) {
+            const typeMap = {
+                'deposit': 'Deposit',
+                'withdrawal': 'Withdrawal',
+                'investment_gain': 'Investment Gain',
+                'investment_loss': 'Investment Loss'
+            };
+            
+            return typeMap[type] || type;
         }
         
         // Update welcome message based on time of day
