@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gracious Praise Team Logo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #2c003e, #0f0835);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        
+        .logo-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .glory-background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #ffdd40 0%, #ff9000 20%, #ff4d00 40%, transparent 70%);
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: pulse 8s infinite alternate;
+        }
+        
+        .glory-rays {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-radial-gradient(
+                circle at center,
+                transparent 0,
+                transparent 10px,
+                rgba(255, 221, 64, 0.3) 10px,
+                rgba(255, 221, 64, 0.3) 13px
+            );
+            border-radius: 50%;
+            animation: rotate 60s linear infinite;
+        }
+        
+        .circle-border {
+            position: absolute;
+            width: 380px;
+            height: 380px;
+            border: 4px solid rgba(255, 215, 0, 0.7);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5),
+                        inset 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+        
+        .text-circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            animation: rotate 30s linear infinite;
+        }
+        
+        .top-text, .bottom-text {
+            position: absolute;
+            left: 50%;
+            transform-origin: 0 0;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #fff;
+            text-shadow: 0 0 10px gold, 0 0 20px orange;
+            letter-spacing: 2px;
+        }
+        
+        .top-text {
+            top: 20px;
+            font-size: 18px;
+            transform: translateX(-50%) rotate(0deg);
+        }
+        
+        .bottom-text {
+            bottom: 20px;
+            font-size: 16px;
+            transform: translateX(-50%) rotate(0deg);
+        }
+        
+        .acronym {
+            position: absolute;
+            font-size: 80px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 15px gold, 0 0 30px orange, 0 0 45px darkorange;
+            z-index: 10;
+            letter-spacing: 5px;
+        }
+        
+        .cross {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            opacity: 0.3;
+        }
+        
+        .cross:before, .cross:after {
+            content: '';
+            position: absolute;
+            background: gold;
+            box-shadow: 0 0 10px gold;
+        }
+        
+        .cross:before {
+            width: 100%;
+            height: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .cross:after {
+            width: 15px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .dove {
+            position: absolute;
+            font-size: 40px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.2;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.05); }
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .scripture {
+            position: absolute;
+            bottom: -40px;
+            color: white;
+            font-style: italic;
+            opacity: 0.7;
+            text-align: center;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <div class="glory-background"></div>
+        <div class="glory-rays"></div>
+        <div class="circle-border"></div>
+        
+        <div class="text-circle">
+            <div class="top-text">Gracious Praise Team of Praise & Worship</div>
+            <div class="bottom-text">Sacrifice of Praise and Worship</div>
+        </div>
+        
+        <div class="acronym">GPT</div>
+        <div class="cross"></div>
+        <div class="dove">✝</div>
+        
+        <div class="scripture">"Let everything that has breath praise the Lord." - Psalm 150:6</div>
+    </div>
+</body>
+</html>
