@@ -16,7 +16,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: linear-gradient(to bottom, #2c003e, #0f0835);
+            background: linear-gradient(to bottom, #1a0639, #0f0835);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding: 20px;
         }
@@ -37,22 +37,6 @@
             background: radial-gradient(circle, #ffdd40 0%, #ff9000 20%, #ff4d00 40%, transparent 70%);
             border-radius: 50%;
             opacity: 0.8;
-            animation: pulse 8s infinite alternate;
-        }
-        
-        .glory-rays {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: repeating-radial-gradient(
-                circle at center,
-                transparent 0,
-                transparent 10px,
-                rgba(255, 221, 64, 0.3) 10px,
-                rgba(255, 221, 64, 0.3) 13px
-            );
-            border-radius: 50%;
-            animation: rotate 60s linear infinite;
         }
         
         .circle-border {
@@ -65,91 +49,14 @@
                         inset 0 0 20px rgba(255, 215, 0, 0.3);
         }
         
-        .text-circle {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            animation: rotate 30s linear infinite;
-        }
-        
-        .top-text, .bottom-text {
-            position: absolute;
-            left: 50%;
-            transform-origin: 0 0;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #fff;
-            text-shadow: 0 0 10px gold, 0 0 20px orange;
-            letter-spacing: 2px;
-        }
-        
-        .top-text {
-            top: 20px;
-            font-size: 18px;
-            transform: translateX(-50%) rotate(0deg);
-        }
-        
-        .bottom-text {
-            bottom: 20px;
-            font-size: 16px;
-            transform: translateX(-50%) rotate(0deg);
-        }
-        
         .acronym {
             position: absolute;
-            font-size: 80px;
+            font-size: 90px;
             font-weight: 900;
             color: #fff;
             text-shadow: 0 0 15px gold, 0 0 30px orange, 0 0 45px darkorange;
             z-index: 10;
             letter-spacing: 5px;
-        }
-        
-        .cross {
-            position: absolute;
-            width: 80px;
-            height: 80px;
-            opacity: 0.3;
-        }
-        
-        .cross:before, .cross:after {
-            content: '';
-            position: absolute;
-            background: gold;
-            box-shadow: 0 0 10px gold;
-        }
-        
-        .cross:before {
-            width: 100%;
-            height: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        
-        .cross:after {
-            width: 15px;
-            height: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        
-        .dove {
-            position: absolute;
-            font-size: 40px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0.2;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 0.7; transform: scale(1); }
-            50% { opacity: 0.9; transform: scale(1.05); }
-        }
-        
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
         }
         
         .scripture {
@@ -161,22 +68,194 @@
             text-align: center;
             width: 100%;
         }
+        
+        /* Circular text elements */
+        .circular-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+        
+        .top-text, .bottom-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            height: 50%;
+            overflow: hidden;
+        }
+        
+        .top-text {
+            top: 0;
+        }
+        
+        .bottom-text {
+            bottom: 0;
+            transform: rotate(180deg);
+        }
+        
+        .top-text span, .bottom-text span {
+            display: block;
+            width: 100%;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: #fff;
+            text-transform: uppercase;
+            padding: 10px 0;
+            text-shadow: 0 0 10px gold, 0 0 20px orange;
+            letter-spacing: 3px;
+        }
+        
+        .bottom-text span {
+            transform: rotate(180deg);
+        }
+        
+        /* Microphone and fire elements */
+        .mic-container {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+        
+        .mic {
+            width: 30px;
+            height: 50px;
+            background: linear-gradient(to right, #aaa, #fff, #aaa);
+            border-radius: 15px 15px 0 0;
+            position: relative;
+        }
+        
+        .mic:before {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 10px;
+            background: linear-gradient(to right, #aaa, #fff, #aaa);
+            border-radius: 5px;
+            bottom: -10px;
+            left: -5px;
+        }
+        
+        .mic:after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 15px;
+            background: #333;
+            border-radius: 3px;
+            bottom: -25px;
+            left: 5px;
+        }
+        
+        .fire {
+            position: absolute;
+            width: 40px;
+            height: 60px;
+            background: radial-gradient(ellipse at bottom, #ff8c00, #ff5500, transparent 70%),
+                        radial-gradient(ellipse at center, #ffdd00, #ff8c00, transparent 70%);
+            border-radius: 50% 50% 20% 20%;
+            transform: rotate(45deg);
+            box-shadow: 0 0 20px #ff5500, 0 0 40px #ff8c00;
+            animation: flicker 3s infinite alternate;
+        }
+        
+        .fire:before, .fire:after {
+            content: '';
+            position: absolute;
+            background: radial-gradient(ellipse at bottom, #ff8c00, #ff5500, transparent 70%),
+                        radial-gradient(ellipse at center, #ffdd00, #ff8c00, transparent 70%);
+            border-radius: 50% 50% 20% 20%;
+            box-shadow: 0 0 10px #ff5500, 0 0 20px #ff8c00;
+        }
+        
+        .fire:before {
+            width: 30px;
+            height: 45px;
+            top: -5px;
+            left: -15px;
+            transform: rotate(-45deg);
+        }
+        
+        .fire:after {
+            width: 30px;
+            height: 45px;
+            top: -5px;
+            right: -15px;
+            transform: rotate(45deg);
+        }
+        
+        @keyframes flicker {
+            0%, 100% { opacity: 0.9; transform: scale(1) rotate(45deg); }
+            50% { opacity: 1; transform: scale(1.1) rotate(45deg); }
+        }
+        
+        /* Decorative elements */
+        .light-ray {
+            position: absolute;
+            width: 4px;
+            height: 200px;
+            background: linear-gradient(to bottom, transparent, gold, transparent);
+            opacity: 0.6;
+        }
+        
+        .light-ray:nth-child(1) { transform: rotate(0deg); }
+        .light-ray:nth-child(2) { transform: rotate(45deg); }
+        .light-ray:nth-child(3) { transform: rotate(90deg); }
+        .light-ray:nth-child(4) { transform: rotate(135deg); }
+        .light-ray:nth-child(5) { transform: rotate(180deg); }
+        .light-ray:nth-child(6) { transform: rotate(225deg); }
+        .light-ray:nth-child(7) { transform: rotate(270deg); }
+        .light-ray:nth-child(8) { transform: rotate(315deg); }
     </style>
 </head>
 <body>
     <div class="logo-container">
         <div class="glory-background"></div>
-        <div class="glory-rays"></div>
         <div class="circle-border"></div>
         
-        <div class="text-circle">
-            <div class="top-text">Gracious Praise Team of Praise & Worship</div>
-            <div class="bottom-text">Sacrifice of Praise and Worship</div>
+        <!-- Circular text elements -->
+        <div class="circular-text">
+            <div class="top-text">
+                <span>Gracious Praise Team</span>
+            </div>
+            <div class="bottom-text">
+                <span>Sacrifice of Praise and Worship</span>
+            </div>
         </div>
         
         <div class="acronym">GPT</div>
-        <div class="cross"></div>
-        <div class="dove">✝</div>
+        
+        <!-- Light rays -->
+        <div class="light-ray"></div>
+        <div class="light-ray"></div>
+        <div class="light-ray"></div>
+        <div class="light-ray"></div>
+        <div class="light-ray"></div>
+        <div class="light-ray"></div>
+        <div class="light-ray"></div>
+        <div class="light-ray"></div>
+        
+        <!-- Microphone and fire elements -->
+        <div class="mic-container" style="top: 140px; left: 140px;">
+            <div class="mic"></div>
+        </div>
+        
+        <div class="mic-container" style="top: 140px; right: 140px; transform: rotate(15deg);">
+            <div class="fire"></div>
+        </div>
+        
+        <div class="mic-container" style="bottom: 140px; left: 140px; transform: rotate(-15deg);">
+            <div class="fire"></div>
+        </div>
+        
+        <div class="mic-container" style="bottom: 140px; right: 140px;">
+            <div class="mic"></div>
+        </div>
         
         <div class="scripture">"Let everything that has breath praise the Lord." - Psalm 150:6</div>
     </div>
